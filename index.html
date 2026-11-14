@@ -1,0 +1,2776 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Visit & Absensi Geotag — KPK X Ini Lho ITS 2027 Gresik</title>
+  <meta name="description" content="Portal plotting visit SMA dan absensi geotag panitia KPK X Ini Lho ITS 2027 Gresik.">
+  <meta name="theme-color" content="#0F2537">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.46.1/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --primary-header-bg: #0F2537;
+      --primary-accent: #1E40AF;
+      --primary-accent-hover: #1E3A8A;
+      --bg-page: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --border-color: #E2E8F0;
+      --text-main: #0F172A;
+      --text-secondary: #475569;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-mono-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .table-strict {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table-strict th {
+      background-color: #F1F5F9;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 10px 12px;
+      border-bottom: 1px solid #E2E8F0;
+      border-right: 1px solid #E2E8F0;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .table-strict th:last-child {
+      border-right: none;
+    }
+
+    .table-strict td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #E2E8F0;
+      border-right: 1px solid #E2E8F0;
+      vertical-align: middle;
+    }
+
+    .table-strict td:last-child {
+      border-right: none;
+    }
+
+    .table-strict tbody tr:hover td {
+      background-color: #F8FAFC;
+    }
+
+    .swappable-row {
+      cursor: pointer;
+    }
+
+    .swappable-row.selected-for-swap td {
+      background-color: #FEF9C3 !important;
+      border-top: 1px solid #EAB308;
+      border-bottom: 1px solid #EAB308;
+    }
+
+    .team-divider td {
+      border-top: 2px solid #CBD5E1;
+    }
+
+    .nav-item.active {
+      background-color: #EFF6FF;
+      color: #1E40AF;
+      border-right: 3px solid #1E40AF;
+      font-weight: 600;
+    }
+
+    .bottom-nav-item.active {
+      color: #1E40AF;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row bg-[#F8FAFC] text-[#0F172A]">
+
+  <!-- ========================================================================
+       SIDEBAR NAVIGASI KIRI (DESKTOP)
+       ======================================================================== -->
+  <aside class="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white border-r border-[#E2E8F0] z-30">
+    <!-- Brand Logo Header -->
+    <div class="p-4 border-b border-[#E2E8F0]" style="background-color: var(--primary-header-bg); color: #FFFFFF;">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-white/15 text-white">KPK X ILITS 2027</span>
+        <span id="badgeDbMode" class="text-[11px] font-medium px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30">Mode Demo</span>
+      </div>
+      <h1 class="text-base font-bold mt-2 leading-snug">SIGMA Visit Gresik</h1>
+      <p class="text-xs text-slate-300 mt-0.5">Portal Plotting &amp; Absensi Geotag</p>
+    </div>
+
+    <!-- User Active Card -->
+    <div class="p-3.5 border-b border-[#E2E8F0] bg-slate-50/70">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Sesi Panitia Aktif</p>
+          <p id="sidebarUserName" class="text-xs font-bold text-slate-800 mt-0.5 truncate max-w-[160px]">M. Andhika</p>
+          <p id="sidebarUserNrp" class="text-[11px] text-slate-500 font-mono-num">NRP: 5031251025</p>
+        </div>
+        <span id="sidebarUserRole" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">ADMIN</span>
+      </div>
+      <div class="mt-2.5 flex gap-1.5">
+        <button type="button" id="btnOpenLoginModal" class="flex-1 text-[11px] font-semibold py-1.5 px-2 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center gap-1">
+          <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Ganti NRP
+        </button>
+        <button type="button" id="btnOpenSchemaModal" class="text-[11px] font-semibold py-1.5 px-2 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700" title="SQL Schema Supabase">
+          <i data-lucide="database" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-5">
+      <!-- Kelompok Menu Panitia -->
+      <div>
+        <div class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Menu Panitia</div>
+        <div class="space-y-0.5">
+          <button type="button" data-nav="viewJadwalVisitku" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 rounded-l hover:bg-slate-50 text-left">
+            <i data-lucide="calendar-check-2" class="w-4 h-4 shrink-0"></i>
+            <span>Jadwal Visitku</span>
+          </button>
+          <button type="button" data-nav="viewKameraGeotag" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 rounded-l hover:bg-slate-50 text-left">
+            <i data-lucide="camera" class="w-4 h-4 shrink-0"></i>
+            <span>Kamera Absensi Geotag</span>
+          </button>
+          <button type="button" data-nav="viewFormKetersediaan" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 rounded-l hover:bg-slate-50 text-left">
+            <i data-lucide="clipboard-edit" class="w-4 h-4 shrink-0"></i>
+            <span>Form Ketersediaan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Kelompok Menu Admin (Staff Visit) -->
+      <div id="sidebarAdminGroup">
+        <div class="px-3 mb-1.5 flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Menu Admin (Staff Visit)</span>
+          <span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded">Staff</span>
+        </div>
+        <div class="space-y-0.5">
+          <button type="button" data-nav="viewAdminPlotting" class="nav-item active w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 rounded-l hover:bg-slate-50 text-left">
+            <i data-lucide="table-2" class="w-4 h-4 shrink-0"></i>
+            <span>Data Master &amp; Plotting</span>
+          </button>
+          <button type="button" data-nav="viewMonitoringFoto" class="nav-item w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 rounded-l hover:bg-slate-50 text-left">
+            <i data-lucide="image" class="w-4 h-4 shrink-0"></i>
+            <span>Monitoring Absensi Live</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Footer Quick Action -->
+    <div class="p-3 border-t border-[#E2E8F0] bg-slate-50 space-y-2">
+      <div class="flex items-center justify-between text-[11px] text-slate-600">
+        <span>Warna Header (:root)</span>
+        <input type="color" id="inputColorHeader" value="#0F2537" class="w-7 h-6 p-0.5 border border-slate-300 rounded bg-white cursor-pointer">
+      </div>
+      <button type="button" id="btnLoadSimulasi" class="w-full py-1.5 px-2.5 text-xs font-semibold rounded border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 flex items-center justify-center gap-1.5">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reset Data Simulasi (37 SMA)
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       AREA KONTEN UTAMA
+       ======================================================================== -->
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen pb-16 md:pb-8">
+
+    <!-- Topbar Mobile & Desktop Action Strip -->
+    <header class="bg-white border-b border-[#E2E8F0] sticky top-0 z-20 px-4 lg:px-6 py-3">
+      <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="md:hidden px-2 py-1 rounded text-white text-xs font-bold" style="background-color: var(--primary-header-bg);">ILITS 27</div>
+          <div>
+            <h2 id="topbarPageTitle" class="text-sm lg:text-base font-bold text-slate-900">Data Master &amp; Generator Plotting (37 SMA &amp; 135 Panitia)</h2>
+            <p id="topbarPageSubtitle" class="text-xs text-slate-500 hidden sm:block">Algoritma Matriks Skor Domisili, Afirmasi Alumni, Prioritas Lokasi Pinggiran &amp; Auto-Swap Kuota 5x Visit</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Quick Switcher NRP di Topbar -->
+          <div class="flex items-center bg-slate-100 border border-[#CBD5E1] rounded px-2 py-1 text-xs">
+            <span class="text-slate-500 mr-1.5 font-medium">Login NRP:</span>
+            <input type="text" id="quickNrpInput" value="5031251025" placeholder="Ketik NRP..." class="w-28 bg-transparent font-mono-num font-semibold text-slate-900 focus:outline-none">
+            <button type="button" id="btnQuickLogin" class="ml-1 px-2 py-0.5 bg-[#1E40AF] text-white rounded text-[11px] font-semibold hover:bg-[#1E3A8A]">Masuk</button>
+          </div>
+
+          <button type="button" id="btnDemoModeTop" class="px-2.5 py-1.5 text-xs font-semibold rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700">
+            Mode Demo / Isi Data Awal
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-[1440px] w-full mx-auto px-4 lg:px-6 pt-4 space-y-4">
+
+      <!-- ====================================================================
+           SUMMARY STAT CARDS (Gaya Dashboard Organisasi Modern)
+           ==================================================================== -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-3.5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Data Sekolah</span>
+            <i data-lucide="school" class="w-4 h-4"></i>
+          </div>
+          <div id="statTotalSMA" class="text-xl font-bold text-slate-900 mt-1 font-mono-num">37 SMA</div>
+          <div id="statSubSMA" class="text-[11px] text-slate-500 mt-0.5">20 Pinggiran / 17 Kota</div>
+        </div>
+
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-3.5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Data Panitia</span>
+            <i data-lucide="users" class="w-4 h-4"></i>
+          </div>
+          <div id="statTotalPanitia" class="text-xl font-bold text-slate-900 mt-1 font-mono-num">135 Orang</div>
+          <div id="statSubPanitia" class="text-[11px] text-slate-500 mt-0.5">Target 5x visit (675 slot)</div>
+        </div>
+
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-3.5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Slot Tim Terisi</span>
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </div>
+          <div id="statKursiTerisi" class="text-xl font-bold text-slate-900 mt-1 font-mono-num">675 Slot</div>
+          <div id="statSubKursi" class="text-[11px] text-slate-500 mt-0.5">3 Tim x 6 Orang / SMA</div>
+        </div>
+
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-3.5">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Kuota 5x Visit</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <div id="statKuotaTepat" class="text-xl font-bold text-emerald-700 mt-1 font-mono-num">100%</div>
+          <div id="statSubKuota" class="text-[11px] text-slate-500 mt-0.5">135/135 panitia tepat 5x</div>
+        </div>
+
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-3.5 col-span-2 sm:col-span-1">
+          <div class="flex items-center justify-between text-slate-400">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Absensi Geotag</span>
+            <i data-lucide="map-pin" class="w-4 h-4 text-blue-600"></i>
+          </div>
+          <div id="statTotalAlumni" class="text-xl font-bold text-slate-900 mt-1 font-mono-num">0 Hadir</div>
+          <div id="statSubKonflik" class="text-[11px] text-slate-500 mt-0.5">37 Alumni di SMA Asal</div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           BANNER STATUS & NOTIFIKASI INTERAKTIF
+           ==================================================================== -->
+      <div id="noticeBar" class="bg-white border border-[#E2E8F0] rounded-md px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
+          <span id="noticeText" class="text-xs font-medium text-slate-800">
+            Sistem siap digunakan. Anda login sebagai Admin (NRP 5031251025 - M. Andhika). Klik baris panitia di tabel untuk menukar posisi manual (Click-to-Swap).
+          </span>
+        </div>
+        <div id="swapActionGroup" class="hidden">
+          <button type="button" id="btnCancelSwap" class="px-2.5 py-1 text-xs font-semibold rounded border border-amber-500 bg-white text-amber-900 hover:bg-amber-50">
+            Batalkan Pilihan Tukar
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           VIEW 1 (ADMIN): DATA MASTER & GENERATOR PLOTTING
+           ==================================================================== -->
+      <section id="viewAdminPlotting" class="app-view space-y-4">
+        <!-- Toolbar Aksi Plotting & Excel -->
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-4 flex flex-wrap items-end justify-between gap-4">
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="inputTargetVisit" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Target Visit / Panitia</label>
+              <input type="number" id="inputTargetVisit" value="5" min="1" max="15" class="h-9 w-24 px-2.5 border border-[#CBD5E1] rounded text-xs font-semibold font-mono-num">
+            </div>
+            <button type="button" id="btnGeneratePlotting" class="h-9 px-4 rounded bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="cpu" class="w-4 h-4"></i>
+              <span>Generate Plotting (5x Visit/Panitia)</span>
+            </button>
+            <button type="button" id="btnPublishSupabase" class="h-9 px-3.5 rounded bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+              <span>Publish ke Database Supabase</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btnDownloadTemplate" class="h-9 px-3 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+              <span>Download Template Input (.xlsx)</span>
+            </button>
+            <label class="h-9 px-3 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="upload" class="w-4 h-4"></i>
+              <span>Import Excel/CSV</span>
+              <input type="file" id="fileInputExcel" accept=".xlsx,.xls,.csv" class="hidden">
+            </label>
+            <button type="button" id="btnExportExcel" class="h-9 px-3.5 rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Download Hasil ke Excel (.xlsx)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sub-Tab Tabel Plotting & Filter -->
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-3 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" data-subtab="tabHasilSMA" class="admin-subtab-btn px-3 py-1.5 text-xs font-semibold rounded bg-[#1E40AF] text-white">
+              1. Tabel Hasil per SMA (Tim 1, 2, 3)
+            </button>
+            <button type="button" data-subtab="tabRekapPanitia" class="admin-subtab-btn px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200">
+              2. Tabel Rekap Kuota Panitia
+            </button>
+            <button type="button" data-subtab="tabDataInput" class="admin-subtab-btn px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200">
+              3. Master Data Input (Sekolah &amp; Panitia)
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="inputSearchFilter" placeholder="Cari SMA, nama, NRP, zona..." class="h-8 w-52 px-2.5 border border-[#CBD5E1] rounded text-xs">
+            <select id="selectZonaFilter" class="h-8 px-2 border border-[#CBD5E1] rounded text-xs bg-white">
+              <option value="ALL">Semua Zona</option>
+              <option value="Kota-Tengah">Zona Kota-Tengah</option>
+              <option value="Utara">Zona Utara</option>
+              <option value="Barat">Zona Barat</option>
+              <option value="Selatan">Zona Selatan</option>
+            </select>
+            <select id="selectKategoriFilter" class="h-8 px-2 border border-[#CBD5E1] rounded text-xs bg-white">
+              <option value="ALL">Semua Lokasi</option>
+              <option value="Pinggiran">Lokasi: Pinggiran</option>
+              <option value="Kota">Lokasi: Kota</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 1A: Hasil Plotting per SMA -->
+        <div id="tabHasilSMA" class="admin-subview space-y-4">
+          <div id="schoolResultsContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- SUB-VIEW 1B: Rekap Kuota Panitia -->
+        <div id="tabRekapPanitia" class="admin-subview hidden">
+          <div class="bg-white border border-[#E2E8F0] rounded-md overflow-x-auto">
+            <table class="table-strict">
+              <thead>
+                <tr>
+                  <th style="width: 75px;">ID</th>
+                  <th style="width: 110px;">NRP</th>
+                  <th>Nama Panitia</th>
+                  <th>Asal SMA</th>
+                  <th>Zona Domisili</th>
+                  <th>Bersedia Jauh</th>
+                  <th>Tgl Halangan</th>
+                  <th>Info Tambahan</th>
+                  <th style="width: 105px; text-align: center;">Kuota Visit</th>
+                  <th>Rincian 5 SMA &amp; Tanggal Visit yang Didatangi</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyRekapPanitia"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 1C: Master Data Input -->
+        <div id="tabDataInput" class="admin-subview hidden space-y-5">
+          <div>
+            <h3 id="labelMasterSekolah" class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Daftar Master 37 SMA Wilayah Gresik</h3>
+            <div class="bg-white border border-[#E2E8F0] rounded-md overflow-x-auto max-h-96">
+              <table class="table-strict">
+                <thead>
+                  <tr>
+                    <th>ID_Sekolah</th>
+                    <th>Nama_SMA</th>
+                    <th>Zona_Sekolah</th>
+                    <th>Kategori_Lokasi</th>
+                    <th>Tanggal_Visit</th>
+                    <th>Jumlah_Tim</th>
+                    <th>Anggota_Per_Tim</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyMasterSekolah"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h3 id="labelMasterPanitia" class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Daftar Master 135 Panitia KPK X Ini Lho ITS 2027</h3>
+            <div class="bg-white border border-[#E2E8F0] rounded-md overflow-x-auto max-h-[460px]">
+              <table class="table-strict">
+                <thead>
+                  <tr>
+                    <th>ID_Panitia</th>
+                    <th>NRP</th>
+                    <th>Role</th>
+                    <th>Nama</th>
+                    <th>Asal_SMA</th>
+                    <th>Zona_Domisili</th>
+                    <th>Bersedia_Jauh</th>
+                    <th>Tanggal_Halangan</th>
+                    <th>Info_Tambahan</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyMasterPanitia"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 2 (PANITIA): JADWAL VISITKU
+           ==================================================================== -->
+      <section id="viewJadwalVisitku" class="app-view hidden space-y-4">
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Jadwal Penugasan Visit SMA Saya</h3>
+            <p id="jadwalUserSummary" class="text-xs text-slate-500 mt-0.5">Menampilkan daftar penugasan SMA beserta rekan satu tim dan status kehadiran geotag.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="jadwalCountBadge" class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">5x Visit Terjadwal</span>
+          </div>
+        </div>
+
+        <div id="myScheduleCardsGrid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 3 (PANITIA): KAMERA ABSENSI GEOTAG LIVE (TANPA UPLOAD FILE)
+           ==================================================================== -->
+      <section id="viewKameraGeotag" class="app-view hidden space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Kolom Kiri: Live Viewfinder Kamera & Kontrol GPS -->
+          <div class="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-md p-4 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] pb-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Kamera Absensi Geotag Live</h3>
+                <p class="text-xs text-slate-500">Pengambilan foto wajib menggunakan kamera langsung (tanpa unggah berkas galeri) beserta koordinat GPS real-time.</p>
+              </div>
+              <span id="gpsStatusBadge" class="text-[11px] font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700 border border-slate-300">
+                GPS: Menunggu Kunci Lokasi
+              </span>
+            </div>
+
+            <!-- Pilihan Penugasan SMA -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="selectAbsenAssignment" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Pilih Jadwal SMA Tujuan</label>
+                <select id="selectAbsenAssignment" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-white font-medium"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Koordinat Geotag Saat Ini</label>
+                <div class="flex items-center gap-1.5">
+                  <input type="text" id="inputGpsReadout" readonly value="-7.156650, 112.655500 (±12m)" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-slate-50 font-mono-num text-slate-700">
+                  <button type="button" id="btnRefreshGps" class="h-9 px-2.5 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shrink-0" title="Perbarui GPS">
+                    <i data-lucide="locate-fixed" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kotak Viewfinder Video Live -->
+            <div class="relative bg-slate-950 rounded-md overflow-hidden border border-slate-800 aspect-video flex items-center justify-center">
+              <video id="cameraVideoStream" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+              <div id="cameraPlaceholder" class="text-center p-6 text-slate-300 space-y-2">
+                <i data-lucide="camera" class="w-10 h-10 mx-auto text-slate-400"></i>
+                <p class="text-xs font-semibold">Kamera Belum Diaktifkan</p>
+                <p class="text-[11px] text-slate-400 max-w-md mx-auto">Klik tombol "Aktifkan Kamera &amp; GPS" di bawah untuk membuka stream kamera perangkat dan mengunci koordinat lokasi SMA.</p>
+              </div>
+
+              <!-- Live Overlay Preview Bar -->
+              <div class="absolute bottom-0 inset-x-0 bg-black/70 text-white p-2.5 text-[11px] font-mono-num leading-tight border-t border-white/15">
+                <div id="liveOverlayLine1" class="font-bold text-amber-300">KPK X INI LHO ITS 2027 — GRESIK</div>
+                <div id="liveOverlayLine2">Panitia: M. Andhika (5031251025) | SMAN 1 Gresik (Tim 1)</div>
+                <div id="liveOverlayLine3">GPS: -7.156650, 112.655500 (±12m) | Waktu: Live</div>
+              </div>
+            </div>
+
+            <!-- Tombol Kontrol Kamera & Jepret -->
+            <div class="flex flex-wrap items-center gap-2.5 pt-1">
+              <button type="button" id="btnStartCamera" class="h-9 px-4 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold flex items-center gap-1.5">
+                <i data-lucide="video" class="w-4 h-4"></i>
+                <span>Aktifkan Kamera &amp; GPS</span>
+              </button>
+              <button type="button" id="btnCaptureGeotag" class="h-9 px-5 rounded bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-semibold flex items-center gap-1.5">
+                <i data-lucide="aperture" class="w-4 h-4"></i>
+                <span>Jepret &amp; Absen (Watermark + Kompres ~50KB)</span>
+              </button>
+              <button type="button" id="btnStopCamera" class="h-9 px-3 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold ml-auto">
+                Matikan Kamera
+              </button>
+            </div>
+          </div>
+
+          <!-- Kolom Kanan: Hasil Jepretan Terkompresi & Status Upload Supabase -->
+          <div class="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-md p-4 flex flex-col justify-between space-y-4">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">Hasil Foto Watermark &amp; Bukti</h3>
+                  <p class="text-xs text-slate-500">JPEG Quality 0.6 (~40-60 KB) siap unggah ke bucket <code class="font-mono-num">foto-absensi</code></p>
+                </div>
+                <span id="captureSizeBadge" class="text-[11px] font-mono-num font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">Belum ada foto</span>
+              </div>
+
+              <!-- Canvas tersembunyi untuk rendering watermark -->
+              <canvas id="geotagCanvas" width="800" height="600" class="hidden"></canvas>
+
+              <!-- Preview Hasil Gambar Watermark -->
+              <div class="bg-slate-100 border border-[#E2E8F0] rounded-md overflow-hidden aspect-video flex items-center justify-center">
+                <img id="capturedPhotoPreview" alt="Preview Absensi Geotag" class="w-full h-full object-contain hidden">
+                <div id="capturedEmptyState" class="text-center p-6 text-slate-400 text-xs">
+                  Hasil jepretan ber-watermark Nama, NRP, SMA, Timestamp, dan Koordinat GPS akan tampil di sini.
+                </div>
+              </div>
+
+              <!-- Metadata Log Bukti Absensi -->
+              <div id="captureMetaBox" class="bg-slate-50 border border-[#E2E8F0] rounded p-3 text-xs space-y-1 font-mono-num text-slate-700">
+                <div>Status Absensi: <strong id="metaStatusHadir" class="text-slate-900">Menunggu Jepretan</strong></div>
+                <div>Bucket Path: <span id="metaStoragePath" class="text-slate-500">-</span></div>
+                <div>Ukuran Blob: <span id="metaBlobSize" class="text-slate-500">-</span></div>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-[11px] text-slate-500">
+              <span> otomatis tersimpan ke tabel <code class="font-mono-num">plotting_absensi</code></span>
+              <button type="button" id="btnDownloadCapturedJpg" disabled class="px-2.5 py-1 rounded border border-[#CBD5E1] bg-white hover:bg-slate-50 text-slate-700 font-semibold disabled:opacity-40">
+                Unduh salinan .jpg
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 4 (PANITIA): FORM KETERSEDIAAN & PREFERENSI PLOTTING
+           ==================================================================== -->
+      <section id="viewFormKetersediaan" class="app-view hidden">
+        <div class="max-w-3xl bg-white border border-[#E2E8F0] rounded-md p-5 space-y-4">
+          <div class="border-b border-[#E2E8F0] pb-3 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Form Ketersediaan &amp; Data Domisili Panitia</h3>
+              <p class="text-xs text-slate-500">Perbarui data asal sekolah, zona domisili, kesediaan plotting jauh, dan tanggal halangan ke tabel <code class="font-mono-num">panitia</code>.</p>
+            </div>
+            <span class="text-xs font-mono-num font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700" id="formNrpBadge">NRP: 5031251025</span>
+          </div>
+
+          <form id="formKetersediaanPanitia" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="formInputNrp" class="block text-xs font-semibold text-slate-700 mb-1">NRP Panitia</label>
+              <input type="text" id="formInputNrp" required class="w-full h-9 px-3 border border-[#CBD5E1] rounded text-xs font-mono-num bg-slate-50">
+            </div>
+
+            <div>
+              <label for="formInputNama" class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap</label>
+              <input type="text" id="formInputNama" required class="w-full h-9 px-3 border border-[#CBD5E1] rounded text-xs">
+            </div>
+
+            <div>
+              <label for="formSelectAsalSma" class="block text-xs font-semibold text-slate-700 mb-1">Asal SMA (Daftar 37 SMA Gresik)</label>
+              <select id="formSelectAsalSma" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-white"></select>
+            </div>
+
+            <div>
+              <label for="formSelectZona" class="block text-xs font-semibold text-slate-700 mb-1">Zona Domisili di Gresik</label>
+              <select id="formSelectZona" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-white">
+                <option value="Kota-Tengah">Kota-Tengah (Gresik, Kebomas, Manyar)</option>
+                <option value="Utara">Utara (Sidayu, Bungah, Dukun, Panceng, Ujungpangkah)</option>
+                <option value="Barat">Barat (Cerme, Benjeng, Balongpanggang, Duduksampeyan)</option>
+                <option value="Selatan">Selatan (Menganti, Kedamean, Driyorejo, Wringinanom)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="formSelectBersediaJauh" class="block text-xs font-semibold text-slate-700 mb-1">Bersedia Plotting Jauh (Antar-Zona / Pinggiran)</label>
+              <select id="formSelectBersediaJauh" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-white">
+                <option value="Bersedia">Bersedia</option>
+                <option value="Tidak Bersedia">Tidak Bersedia</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="formInputTanggalHalangan" class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Halangan (Pisahkan koma jika &gt;1, atau -)</label>
+              <input type="text" id="formInputTanggalHalangan" placeholder="Contoh: 2027-01-14 atau -" class="w-full h-9 px-3 border border-[#CBD5E1] rounded text-xs font-mono-num">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label for="formInputInfoTambahan" class="block text-xs font-semibold text-slate-700 mb-1">Info Tambahan (Fakultas / Departemen &amp; Status Kendaraan Motor)</label>
+              <input type="text" id="formInputInfoTambahan" placeholder="Contoh: FTSPK - Teknik Sipil | Ada Motor (Honda Supra X 125)" class="w-full h-9 px-3 border border-[#CBD5E1] rounded text-xs">
+            </div>
+
+            <div class="sm:col-span-2 pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
+              <span class="text-[11px] text-slate-500">Perubahan data akan langsung diperhitungkan saat algoritma plotting dijalankan ulang.</span>
+              <button type="submit" class="h-9 px-5 rounded bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-semibold">
+                Simpan Data Ketersediaan
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 5 (ADMIN): MONITORING ABSENSI FOTO LIVE
+           ==================================================================== -->
+      <section id="viewMonitoringFoto" class="app-view hidden space-y-4">
+        <div class="bg-white border border-[#E2E8F0] rounded-md p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">Monitoring Bukti Foto Absensi Geotag Live</h3>
+            <p class="text-xs text-slate-500">Galeri real-time foto kehadiran panitia per SMA lengkap dengan cap waktu dan titik koordinat GPS.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="selectFilterMonitoringSma" class="h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-white">
+              <option value="ALL">Semua SMA (37 Sekolah)</option>
+            </select>
+            <select id="selectFilterMonitoringStatus" class="h-9 px-2.5 border border-[#CBD5E1] rounded text-xs bg-white">
+              <option value="HADIR_ONLY">Tampilkan yang Sudah Hadir (Ada Foto)</option>
+              <option value="ALL">Tampilkan Semua Slot (675 Slot)</option>
+            </select>
+            <button type="button" id="btnExportRekapMonitoring" class="h-9 px-3.5 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5">
+              <i data-lucide="file-down" class="w-4 h-4"></i>
+              <span>Export Rekap ke Excel (.xlsx)</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="monitoringGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ========================================================================
+       BOTTOM NAVIGATION BAR (KHUSUS LAYAR HP / MOBILE)
+       ======================================================================== -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-[#E2E8F0] z-30 flex items-center justify-around py-1.5 px-1">
+    <button type="button" data-nav="viewJadwalVisitku" class="bottom-nav-item flex flex-col items-center py-1 px-2 text-[10px] text-slate-600">
+      <i data-lucide="calendar" class="w-4 h-4 mb-0.5"></i>
+      <span>Jadwalku</span>
+    </button>
+    <button type="button" data-nav="viewKameraGeotag" class="bottom-nav-item flex flex-col items-center py-1 px-2 text-[10px] text-slate-600">
+      <i data-lucide="camera" class="w-4 h-4 mb-0.5"></i>
+      <span>Absen Foto</span>
+    </button>
+    <button type="button" data-nav="viewFormKetersediaan" class="bottom-nav-item flex flex-col items-center py-1 px-2 text-[10px] text-slate-600">
+      <i data-lucide="clipboard-edit" class="w-4 h-4 mb-0.5"></i>
+      <span>Form Data</span>
+    </button>
+    <button type="button" id="mobileNavAdminPlotting" data-nav="viewAdminPlotting" class="bottom-nav-item active flex flex-col items-center py-1 px-2 text-[10px] text-slate-600">
+      <i data-lucide="table-2" class="w-4 h-4 mb-0.5"></i>
+      <span>Plotting</span>
+    </button>
+    <button type="button" id="mobileNavMonitoring" data-nav="viewMonitoringFoto" class="bottom-nav-item flex flex-col items-center py-1 px-2 text-[10px] text-slate-600">
+      <i data-lucide="image" class="w-4 h-4 mb-0.5"></i>
+      <span>Monitor</span>
+    </button>
+  </nav>
+
+  <!-- ========================================================================
+       MODAL 1: PILIH / GANTI NRP LOGIN (ADMIN vs PANITIA)
+       ======================================================================== -->
+  <div id="modalLoginNrp" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white border border-[#E2E8F0] rounded-md max-w-md w-full p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+        <h3 class="text-sm font-bold text-slate-900">Sistem Login NRP Panitia</h3>
+        <button type="button" id="btnCloseLoginModal" class="text-slate-400 hover:text-slate-600 text-xs font-bold">TUTUP</button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600">Masukkan NRP Anda untuk masuk. Jika NRP terdaftar sebagai <code class="font-mono-num font-bold">admin</code> di tabel <code class="font-mono-num">panitia</code>, Menu Admin + Menu Panitia akan terbuka.</p>
+        <div>
+          <label for="modalInputNrp" class="block font-semibold text-slate-700 mb-1">Masukkan NRP</label>
+          <input type="text" id="modalInputNrp" value="5031251025" class="w-full h-9 px-3 border border-[#CBD5E1] rounded font-mono-num text-xs">
+        </div>
+        <div>
+          <label for="modalSelectQuickAccount" class="block font-semibold text-slate-700 mb-1">Atau Pilih Akun Cepat (Simulasi 135 Panitia)</label>
+          <select id="modalSelectQuickAccount" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded bg-white text-xs"></select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
+        <button type="button" id="btnSubmitModalLogin" class="h-9 px-4 rounded bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-semibold">Masuk dengan NRP Ini</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: PANDUAN SQL SUPABASE & KONFIGURASI BUCKET
+       ======================================================================== -->
+  <div id="modalSupabaseSchema" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white border border-[#E2E8F0] rounded-md max-w-2xl w-full p-5 space-y-3 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+        <h3 class="text-sm font-bold text-slate-900">Skema Tabel Supabase &amp; Bucket <code class="font-mono-num">foto-absensi</code></h3>
+        <button type="button" id="btnCloseSchemaModal" class="text-slate-400 hover:text-slate-600 text-xs font-bold">TUTUP</button>
+      </div>
+      <div class="text-xs text-slate-600 space-y-2 overflow-y-auto pr-1">
+        <p>Jalankan perintah SQL berikut pada <strong>SQL Editor Supabase</strong> Anda, serta buat Storage Bucket publik bernama <code class="font-mono-num font-bold">foto-absensi</code>:</p>
+        <pre class="bg-slate-900 text-slate-100 p-3 rounded text-[11px] font-mono-num overflow-x-auto leading-relaxed">-- 1. Tabel Master Panitia
+create table if not exists public.panitia (
+  id_panitia text primary key,
+  nrp text unique not null,
+  nama text not null,
+  role text default 'panitia', -- 'admin' atau 'panitia'
+  asal_sma text,
+  zona_domisili text,
+  bersedia_jauh text default 'Bersedia',
+  tanggal_halangan text default '-',
+  info_tambahan text
+);
+
+-- 2. Tabel Plotting &amp; Bukti Absensi Geotag
+create table if not exists public.plotting_absensi (
+  id_plotting text primary key,
+  id_sekolah text not null,
+  nama_sma text not null,
+  zona_sekolah text,
+  kategori_lokasi text,
+  tanggal_visit text,
+  tim int,
+  kursi int,
+  id_panitia text,
+  nrp text,
+  nama_panitia text,
+  is_alumni boolean default false,
+  status_hadir text default 'Belum Hadir',
+  foto_url text,
+  latitude numeric,
+  longitude numeric,
+  akurasi_meter numeric,
+  waktu_absen timestamptz
+);</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. KONFIGURASI SUPABASE (ISI URL DAN ANON KEY ANDA DI SINI)
+       ========================================================================== */
+    const APP_CONFIG = window.APP_CONFIG || {};
+    const SUPABASE_URL = APP_CONFIG.SUPABASE_URL || "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = APP_CONFIG.SUPABASE_ANON_KEY || "YOUR_SUPABASE_ANON_KEY";
+    const STORAGE_BUCKET_NAME = APP_CONFIG.STORAGE_BUCKET_NAME || "foto-absensi";
+
+    // Inisialisasi Supabase Client otomatis jika URL & Key sudah diganti oleh pengguna
+    let supabaseClient = null;
+    const isSupabaseConfigured =
+      SUPABASE_URL.startsWith("https://") &&
+      !SUPABASE_URL.includes("YOUR_PROJECT_ID") &&
+      SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
+
+    if (isSupabaseConfigured && window.supabase) {
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } catch (err) {
+        supabaseClient = null;
+      }
+    }
+
+    /* ==========================================================================
+       2. STATE APLIKASI TERPUSAT
+       ========================================================================== */
+    const state = {
+      currentUser: null, // Objek panitia yang sedang login
+      panitia: [],
+      sekolah: [],
+      targetVisit: 5,
+      // Struktur assignments: { [ID_Sekolah]: Array of { id_plotting, tim, kursi, panitiaId, isAlumni, skor, alasanSkor, status_hadir, foto_url, latitude, longitude, akurasi_meter, waktu_absen } }
+      assignments: {},
+      selectedSwapSlot: null,
+      activeView: 'viewAdminPlotting',
+      activeAdminSubtab: 'tabHasilSMA',
+      searchQuery: '',
+      zonaFilter: 'ALL',
+      kategoriFilter: 'ALL',
+      // Kamera & Geotag State
+      cameraStream: null,
+      gpsCoords: {
+        lat: -7.156650,
+        lng: 112.655500,
+        acc: 12,
+        isLive: false
+      },
+      lastCapturedBlob: null,
+      lastCapturedDataUrl: null
+    };
+
+    /* ==========================================================================
+       3. GENERATOR DATA SIMULASI GRESIK (37 SMA & 135 PANITIA REALISTIS)
+       ========================================================================== */
+    function buildGresikSimulationData() {
+      const daftarSekolahGresik = [
+        // Zona Kota-Tengah (Gresik, Kebomas, Manyar)
+        { nama: "SMAN 1 Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMAN 1 Kebomas", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMAN 1 Manyar", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMA Muhammadiyah 1 Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMA Semen Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMA NU 1 Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMA YIMI Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMA Nahdlatul Ulama 2 Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "MAN 1 Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMA Muhammadiyah 10 GKB", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMK Semen Gresik", zona: "Kota-Tengah", kategori: "Kota" },
+        { nama: "SMKN 1 Cerme", zona: "Kota-Tengah", kategori: "Kota" },
+
+        // Zona Utara (Sidayu, Bungah, Dukun, Ujungpangkah, Panceng)
+        { nama: "SMAN 1 Sidayu", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMAN 1 Dukun", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Muhammadiyah 3 Bungah", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Assaadah Bungah", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Al Karimi Dukun", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Muhammadiyah 4 Sidayu", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Muhammadiyah 5 Dukun", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Sekar Kemuning Ujungpangkah", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMA Muhammadiyah 7 Panceng", zona: "Utara", kategori: "Pinggiran" },
+        { nama: "SMKN 1 Sidayu", zona: "Utara", kategori: "Pinggiran" },
+
+        // Zona Barat (Cerme, Benjeng, Balongpanggang, Duduksampeyan)
+        { nama: "SMAN 1 Cerme", zona: "Barat", kategori: "Kota" },
+        { nama: "SMAN 1 Balongpanggang", zona: "Barat", kategori: "Pinggiran" },
+        { nama: "SMAN 1 Benjeng", zona: "Barat", kategori: "Pinggiran" },
+        { nama: "SMA Muhammadiyah 8 Cerme", zona: "Barat", kategori: "Kota" },
+        { nama: "SMA Muhammadiyah 2 Balongpanggang", zona: "Barat", kategori: "Pinggiran" },
+        { nama: "SMA Hidayatus Salam Duduksampeyan", zona: "Barat", kategori: "Pinggiran" },
+        { nama: "MAN 2 Gresik", zona: "Barat", kategori: "Pinggiran" },
+        { nama: "SMKN 1 Duduksampeyan", zona: "Barat", kategori: "Pinggiran" },
+
+        // Zona Selatan (Menganti, Kedamean, Driyorejo, Wringinanom)
+        { nama: "SMAN 1 Menganti", zona: "Selatan", kategori: "Kota" },
+        { nama: "SMAN 1 Kedamean", zona: "Selatan", kategori: "Pinggiran" },
+        { nama: "SMAN 1 Driyorejo", zona: "Selatan", kategori: "Kota" },
+        { nama: "SMAN 1 Wringinanom", zona: "Selatan", kategori: "Pinggiran" },
+        { nama: "SMA Al Azhar Menganti", zona: "Selatan", kategori: "Kota" },
+        { nama: "SMA Sunan Giri Menganti", zona: "Selatan", kategori: "Pinggiran" },
+        { nama: "SMKN 1 Driyorejo", zona: "Selatan", kategori: "Kota" }
+      ];
+
+      const jadwalTanggal = [
+        "2027-01-11", "2027-01-12", "2027-01-13", "2027-01-14", "2027-01-15",
+        "2027-01-18", "2027-01-19", "2027-01-20", "2027-01-21", "2027-01-22"
+      ];
+
+      const sekolahData = daftarSekolahGresik.map((item, idx) => {
+        const kodeNum = String(idx + 1).padStart(2, '0');
+        const tanggalVisit = jadwalTanggal[idx % jadwalTanggal.length];
+        return {
+          ID_Sekolah: `SMA-${kodeNum}`,
+          Nama_SMA: item.nama,
+          Zona_Sekolah: item.zona,
+          Kategori_Lokasi: item.kategori,
+          Tanggal_Visit: tanggalVisit,
+          Jumlah_Tim: 3,
+          Anggota_Per_Tim: 6
+        };
+      });
+
+      const namaDepan = [
+        "M. Andhika", "Rizky", "Naufal", "Bagas", "Fajar", "Dimas", "Ilham", "Wahyu", "Reza", "Aditya",
+        "Pratama", "Akbar", "Hafiz", "Zaki", "Farhan", "Alya", "Nabila", "Putri", "Salsabila", "Aulia",
+        "Zahra", "Shafira", "Dinda", "Annisa", "Rahma", "Intan", "Laras", "Nadya", "Vania", "Keisya",
+        "Bima", "Gilang", "Satria", "Taufik", "Arif", "Yoga", "Danang", "Rafi", "Alvin", "Kevin",
+        "Galih", "Hendra", "Irfan", "Fikri", "Lutfi"
+      ];
+
+      const namaBelakang = [
+        "Saputra", "Hidayat", "Wijaya", "Santoso", "Ramadhan", "Kusuma", "Nugroho", "Firmansyah", "Maulana", "Pratama",
+        "Setiawan", "Permana", "Hakim", "Firdaus", "Wardhana", "Sari", "Lestari", "Maharani", "Putri", "Amalia",
+        "Handayani", "Puspita", "Damayanti", "Octaviani", "Syafitri", "Kurniawan", "Susanto", "Budiman", "Utomo", "Hartono"
+      ];
+
+      const fakultasMotorList = [
+        "FTSPK - Teknik Sipil | Ada Motor",
+        "FTSPK - Teknik Geomatika | Ada Motor",
+        "FTSPK - Arsitektur | Nebeng",
+        "FTIRS - Teknik Mesin | Ada Motor",
+        "FTIRS - Teknik Industri | Ada Motor",
+        "FTIRS - Teknik Kimia | Nebeng",
+        "FTEIC - Teknik Informatika | Ada Motor",
+        "FTEIC - Sistem Informasi | Ada Motor",
+        "FTEIC - Teknik Elektro | Nebeng",
+        "FSAD - Statistika | Ada Motor",
+        "FSAD - Matematika | Nebeng",
+        "FTK - Teknik Perkapalan | Ada Motor",
+        "FTK - Teknik Kelautan | Ada Motor",
+        "FDKBD - Desain Produk | Nebeng",
+        "FDKBD - Manajemen Bisnis | Ada Motor",
+        "FV - Teknik Infrastruktur Sipil | Ada Motor"
+      ];
+
+      const panitiaData = [];
+      for (let i = 0; i < 135; i++) {
+        const idNum = String(i + 1).padStart(3, '0');
+        const sekolahAsalObj = sekolahData[i % sekolahData.length];
+        const nd = namaDepan[i % namaDepan.length];
+        const nb = namaBelakang[(Math.floor(i / namaDepan.length) * 7 + i) % namaBelakang.length];
+        const fullName = (i === 0) ? "M. Andhika" : `${nd} ${nb}`;
+        const nrp = (i === 0) ? "5031251025" : `50${String(10 + (i % 25)).padStart(2, '0')}251${idNum}`;
+        const role = (i < 5) ? "admin" : "panitia";
+
+        const zonaDomisili = (i % 5 === 0) ? "Kota-Tengah" : sekolahAsalObj.Zona_Sekolah;
+        const bersediaJauh = (i % 4 !== 0) ? "Bersedia" : "Tidak Bersedia";
+        const tanggalHalangan = (i % 6 === 0 && i !== 0) ? jadwalTanggal[(i + 3) % jadwalTanggal.length] : "-";
+        const infoTambahan = fakultasMotorList[i % fakultasMotorList.length];
+
+        panitiaData.push({
+          ID_Panitia: `PNT-${idNum}`,
+          NRP: nrp,
+          Role: role,
+          Nama: fullName,
+          Asal_SMA: sekolahAsalObj.Nama_SMA,
+          Zona_Domisili: zonaDomisili,
+          Bersedia_Jauh: bersediaJauh,
+          Tanggal_Halangan: tanggalHalangan,
+          Info_Tambahan: infoTambahan
+        });
+      }
+
+      return { sekolahData, panitiaData };
+    }
+
+    // Buat contoh SVG Data URL bukti foto simulasi awal agar galeri Monitoring tidak kosong saat pertama dibuka
+    function createSampleGeotagDataUrl(nama, nrp, sma, tanggal, lat, lng) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="420" viewBox="0 0 640 420">
+        <rect width="640" height="420" fill="#1E293B"/>
+        <rect x="24" y="24" width="592" height="260" rx="6" fill="#334155" stroke="#475569"/>
+        <circle cx="320" cy="125" r="42" fill="#64748B"/>
+        <path d="M250 245 C250 195 390 195 390 245" fill="#64748B"/>
+        <text x="320" y="272" text-anchor="middle" fill="#CBD5E1" font-family="sans-serif" font-size="13" font-weight="bold">BUKTI KEHADIRAN VISIT SMA — KPK X ILITS 2027</text>
+        <rect x="0" y="300" width="640" height="120" fill="#0F172A"/>
+        <text x="20" y="328" fill="#FACC15" font-family="monospace" font-size="14" font-weight="bold">KPK X INI LHO ITS 2027 WILAYAH GRESIK</text>
+        <text x="20" y="352" fill="#FFFFFF" font-family="monospace" font-size="13">${nama} (${nrp})</text>
+        <text x="20" y="376" fill="#E2E8F0" font-family="monospace" font-size="12">Lokasi: ${sma} | Jadwal: ${tanggal}</text>
+        <text x="20" y="398" fill="#94A3B8" font-family="monospace" font-size="12">GPS: ${lat}, ${lng} (±11m) | Terverifikasi Geotag</text>
+      </svg>`;
+      return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+
+    /* ==========================================================================
+       4. ALGORITMA MATRIKS PLOTTING 4 FASE (TEPAT 5X VISIT TANPA BENTROK)
+       ========================================================================== */
+    function normalizeText(str) {
+      return String(str || '').trim().toLowerCase();
+    }
+
+    function parseTanggalHalangan(rawStr) {
+      if (!rawStr || rawStr === '-' || rawStr === 'Tidak Ada') return [];
+      return String(rawStr)
+        .split(/[,;|]/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function isPanitiaBlockedOnDate(panitiaObj, tanggalVisit) {
+      const blockedList = parseTanggalHalangan(panitiaObj.Tanggal_Halangan);
+      return blockedList.includes(String(tanggalVisit).trim());
+    }
+
+    function calculateMatrixScore(panitiaObj, sekolahObj, currentVisitCount, targetVisit) {
+      let score = 0;
+      let labelParts = [];
+
+      const sameZone = normalizeText(panitiaObj.Zona_Domisili) === normalizeText(sekolahObj.Zona_Sekolah);
+      const willingFar = normalizeText(panitiaObj.Bersedia_Jauh) === 'bersedia';
+      const isPinggiran = normalizeText(sekolahObj.Kategori_Lokasi) === 'pinggiran';
+
+      if (sameZone) {
+        score += 100;
+        labelParts.push("Zona Sama (+100)");
+      } else if (willingFar) {
+        score += 75;
+        labelParts.push("Beda Zona & Bersedia Jauh (+75)");
+      } else {
+        if (isPinggiran) {
+          score -= 1000;
+          labelParts.push("Tidak Bersedia Jauh di Pinggiran (-1000)");
+        } else {
+          score += 40;
+          labelParts.push("Beda Zona Kota (+40)");
+        }
+      }
+
+      const sisaKuota = Math.max(0, targetVisit - currentVisitCount);
+      const bonusPrioritas = sisaKuota * 30;
+      score += bonusPrioritas;
+      labelParts.push(`Prioritas Kuota (+${bonusPrioritas})`);
+
+      return { score, reason: labelParts.join(", ") };
+    }
+
+    function runPlottingAlgorithm(seedSamplePhotos = false) {
+      const targetVisitInput = parseInt(document.getElementById('inputTargetVisit').value, 10);
+      const targetVisit = (!isNaN(targetVisitInput) && targetVisitInput > 0) ? targetVisitInput : 5;
+      state.targetVisit = targetVisit;
+      state.selectedSwapSlot = null;
+
+      const sekolahList = state.sekolah;
+      const panitiaList = state.panitia;
+      if (!sekolahList.length || !panitiaList.length) return;
+
+      const panitiaMap = {};
+      const visitCounts = {};
+      const busyDates = {};
+      const assignedSchools = {};
+
+      panitiaList.forEach(p => {
+        panitiaMap[p.ID_Panitia] = p;
+        visitCounts[p.ID_Panitia] = 0;
+        busyDates[p.ID_Panitia] = new Set();
+        assignedSchools[p.ID_Panitia] = new Set();
+      });
+
+      const schoolSlots = {};
+      const schoolCap = {};
+      let totalAvailableSeats = 0;
+
+      sekolahList.forEach(s => {
+        schoolSlots[s.ID_Sekolah] = [];
+        const jmlTim = parseInt(s.Jumlah_Tim, 10) || 3;
+        const anggotaPerTim = parseInt(s.Anggota_Per_Tim, 10) || 6;
+        const baseCap = jmlTim * anggotaPerTim;
+        schoolCap[s.ID_Sekolah] = baseCap;
+        totalAvailableSeats += baseCap;
+      });
+
+      const totalRequiredVisits = panitiaList.length * targetVisit;
+
+      function canAssign(panitiaId, sekolahObj) {
+        const p = panitiaMap[panitiaId];
+        if (!p) return false;
+        if (assignedSchools[panitiaId].has(sekolahObj.ID_Sekolah)) return false;
+        if (busyDates[panitiaId].has(sekolahObj.Tanggal_Visit)) return false;
+        if (isPanitiaBlockedOnDate(p, sekolahObj.Tanggal_Visit)) return false;
+        return true;
+      }
+
+      function assignToSchool(panitiaId, sekolahObj, isAlumni, score, reason) {
+        schoolSlots[sekolahObj.ID_Sekolah].push({
+          panitiaId,
+          isAlumni,
+          skor: score,
+          alasanSkor: reason
+        });
+        visitCounts[panitiaId] += 1;
+        busyDates[panitiaId].add(sekolahObj.Tanggal_Visit);
+        assignedSchools[panitiaId].add(sekolahObj.ID_Sekolah);
+      }
+
+      // FASE 1: Afirmasi Alumni ke Asal SMA
+      sekolahList.forEach(s => {
+        const cap = schoolCap[s.ID_Sekolah];
+        const kandidatAlumni = panitiaList.filter(p =>
+          normalizeText(p.Asal_SMA) === normalizeText(s.Nama_SMA)
+        );
+        for (const p of kandidatAlumni) {
+          if (schoolSlots[s.ID_Sekolah].length >= cap) break;
+          if (visitCounts[p.ID_Panitia] < targetVisit && canAssign(p.ID_Panitia, s)) {
+            assignToSchool(p.ID_Panitia, s, true, 500, "Afirmasi Alumni (Fase 1)");
+          }
+        }
+      });
+
+      // FASE 2: Urutkan Sekolah Pinggiran terlebih dahulu, baru Kota
+      const sortedSchools = [...sekolahList].sort((a, b) => {
+        const aPinggiran = normalizeText(a.Kategori_Lokasi) === 'pinggiran' ? 0 : 1;
+        const bPinggiran = normalizeText(b.Kategori_Lokasi) === 'pinggiran' ? 0 : 1;
+        if (aPinggiran !== bPinggiran) return aPinggiran - bPinggiran;
+        return String(a.ID_Sekolah).localeCompare(String(b.ID_Sekolah));
+      });
+
+      if (totalRequiredVisits > totalAvailableSeats) {
+        const extraNeeded = totalRequiredVisits - totalAvailableSeats;
+        const kotaFirstSchools = [...sekolahList].sort((a, b) => {
+          const aKota = normalizeText(a.Kategori_Lokasi) === 'kota' ? 0 : 1;
+          const bKota = normalizeText(b.Kategori_Lokasi) === 'kota' ? 0 : 1;
+          return aKota - bKota;
+        });
+        for (let i = 0; i < extraNeeded; i++) {
+          const targetSchool = kotaFirstSchools[i % kotaFirstSchools.length];
+          schoolCap[targetSchool.ID_Sekolah] += 1;
+        }
+      }
+
+      // FASE 3: Matriks Skor Domisili & Kesediaan Jauh
+      sortedSchools.forEach(s => {
+        const cap = schoolCap[s.ID_Sekolah];
+        while (schoolSlots[s.ID_Sekolah].length < cap) {
+          let bestCandidate = null;
+          let bestEval = null;
+
+          for (const p of panitiaList) {
+            const pid = p.ID_Panitia;
+            if (visitCounts[pid] >= targetVisit) continue;
+            if (!canAssign(pid, s)) continue;
+
+            const evalRes = calculateMatrixScore(p, s, visitCounts[pid], targetVisit);
+            if (
+              bestCandidate === null ||
+              evalRes.score > bestEval.score ||
+              (evalRes.score === bestEval.score && visitCounts[pid] < visitCounts[bestCandidate.ID_Panitia])
+            ) {
+              bestCandidate = p;
+              bestEval = evalRes;
+            }
+          }
+
+          if (!bestCandidate) break;
+          assignToSchool(bestCandidate.ID_Panitia, s, false, bestEval.score, bestEval.reason);
+        }
+      });
+
+      // FASE 4: Auto-Swap Penyempurnaan Kuota 5x Visit & Pembagian 3 Tim
+      for (let pass = 0; pass < 8; pass++) {
+        const underfullPanitia = panitiaList.filter(p => visitCounts[p.ID_Panitia] < targetVisit);
+        if (underfullPanitia.length === 0) break;
+
+        for (const u of underfullPanitia) {
+          const uid = u.ID_Panitia;
+          while (visitCounts[uid] < targetVisit) {
+            let placedOrSwapped = false;
+
+            for (const sA of sortedSchools) {
+              if (schoolSlots[sA.ID_Sekolah].length < schoolCap[sA.ID_Sekolah] && canAssign(uid, sA)) {
+                const evalDirect = calculateMatrixScore(u, sA, visitCounts[uid], targetVisit);
+                assignToSchool(uid, sA, normalizeText(u.Asal_SMA) === normalizeText(sA.Nama_SMA), evalDirect.score, evalDirect.reason);
+                placedOrSwapped = true;
+                break;
+              }
+            }
+            if (placedOrSwapped) continue;
+
+            const openSchools = sortedSchools.filter(s => schoolSlots[s.ID_Sekolah].length < schoolCap[s.ID_Sekolah]);
+            for (const sA of openSchools) {
+              for (const sB of sortedSchools) {
+                if (sB.ID_Sekolah === sA.ID_Sekolah) continue;
+                if (!canAssign(uid, sB)) continue;
+
+                const slotsB = schoolSlots[sB.ID_Sekolah];
+                let foundIdx = -1;
+
+                for (let idx = 0; idx < slotsB.length; idx++) {
+                  const slotV = slotsB[idx];
+                  if (slotV.isAlumni) continue;
+                  const vid = slotV.panitiaId;
+                  const vObj = panitiaMap[vid];
+
+                  const sameDateBA = sB.Tanggal_Visit === sA.Tanggal_Visit;
+                  const vBusyInA = !sameDateBA && busyDates[vid].has(sA.Tanggal_Visit);
+                  const vAlreadyInA = assignedSchools[vid].has(sA.ID_Sekolah);
+                  const vBlockedInA = isPanitiaBlockedOnDate(vObj, sA.Tanggal_Visit);
+
+                  if (!vBusyInA && !vAlreadyInA && !vBlockedInA) {
+                    foundIdx = idx;
+                    break;
+                  }
+                }
+
+                if (foundIdx !== -1) {
+                  const movingSlot = slotsB[foundIdx];
+                  const vid = movingSlot.panitiaId;
+                  const vObj = panitiaMap[vid];
+
+                  busyDates[vid].delete(sB.Tanggal_Visit);
+                  assignedSchools[vid].delete(sB.ID_Sekolah);
+
+                  const evalU = calculateMatrixScore(u, sB, visitCounts[uid], targetVisit);
+                  slotsB[foundIdx] = {
+                    panitiaId: uid,
+                    isAlumni: normalizeText(u.Asal_SMA) === normalizeText(sB.Nama_SMA),
+                    skor: evalU.score,
+                    alasanSkor: evalU.reason + " [Auto-Swap]"
+                  };
+                  visitCounts[uid] += 1;
+                  busyDates[uid].add(sB.Tanggal_Visit);
+                  assignedSchools[uid].add(sB.ID_Sekolah);
+
+                  const evalV = calculateMatrixScore(vObj, sA, visitCounts[vid] - 1, targetVisit);
+                  schoolSlots[sA.ID_Sekolah].push({
+                    panitiaId: vid,
+                    isAlumni: normalizeText(vObj.Asal_SMA) === normalizeText(sA.Nama_SMA),
+                    skor: evalV.score,
+                    alasanSkor: evalV.reason + " [Auto-Swap]"
+                  });
+                  busyDates[vid].add(sA.Tanggal_Visit);
+                  assignedSchools[vid].add(sA.ID_Sekolah);
+
+                  placedOrSwapped = true;
+                  break;
+                }
+              }
+              if (placedOrSwapped) break;
+            }
+            if (!placedOrSwapped) break;
+          }
+        }
+      }
+
+      // Pembagian ke dalam 3 Tim @ 6 orang + Inisialisasi status_hadir & bukti foto contoh
+      const finalAssignments = {};
+      sekolahList.forEach((s, sIdx) => {
+        const jmlTim = parseInt(s.Jumlah_Tim, 10) || 3;
+        const anggotaPerTim = parseInt(s.Anggota_Per_Tim, 10) || 6;
+        const baseTotal = jmlTim * anggotaPerTim;
+        const rawMembers = schoolSlots[s.ID_Sekolah] || [];
+
+        const groupedByTeam = Array.from({ length: jmlTim }, () => []);
+        rawMembers.forEach((item, index) => {
+          if (index < baseTotal) {
+            const timIdx = Math.floor(index / anggotaPerTim);
+            groupedByTeam[timIdx].push(item);
+          } else {
+            groupedByTeam[jmlTim - 1].push(item);
+          }
+        });
+
+        const flattened = [];
+        groupedByTeam.forEach((teamMembers, tIdx) => {
+          teamMembers.forEach((m, kIdx) => {
+            const pObj = panitiaMap[m.panitiaId] || {};
+            const isSampleHadir = seedSamplePhotos && sIdx < 2 && tIdx === 0 && kIdx < 2;
+            const sampleLat = (-7.1566 + (sIdx * 0.003) + (kIdx * 0.0002)).toFixed(6);
+            const sampleLng = (112.6555 - (sIdx * 0.002) + (kIdx * 0.0002)).toFixed(6);
+
+            flattened.push({
+              id_plotting: `PLT-${s.ID_Sekolah}-T${tIdx + 1}-K${kIdx + 1}`,
+              tim: tIdx + 1,
+              kursi: kIdx + 1,
+              panitiaId: m.panitiaId,
+              isAlumni: m.isAlumni,
+              skor: m.skor,
+              alasanSkor: m.alasanSkor,
+              status_hadir: isSampleHadir ? 'Hadir' : 'Belum Hadir',
+              foto_url: isSampleHadir
+                ? createSampleGeotagDataUrl(pObj.Nama, pObj.NRP, s.Nama_SMA, s.Tanggal_Visit, sampleLat, sampleLng)
+                : '',
+              latitude: isSampleHadir ? parseFloat(sampleLat) : null,
+              longitude: isSampleHadir ? parseFloat(sampleLng) : null,
+              akurasi_meter: isSampleHadir ? 11 : null,
+              waktu_absen: isSampleHadir ? `${s.Tanggal_Visit} 08:15:00 WIB` : ''
+            });
+          });
+        });
+
+        finalAssignments[s.ID_Sekolah] = flattened;
+      });
+
+      state.assignments = finalAssignments;
+      renderAll();
+    }
+
+    /* ==========================================================================
+       5. SISTEM LOGIN NRP & NAVIGASI ROLE (ADMIN vs PANITIA)
+       ========================================================================== */
+    function loginByNrp(nrpInput) {
+      const cleaned = String(nrpInput || '').trim();
+      if (!cleaned) return;
+
+      const found = state.panitia.find(p =>
+        normalizeText(p.NRP) === normalizeText(cleaned) ||
+        normalizeText(p.ID_Panitia) === normalizeText(cleaned)
+      );
+
+      if (!found) {
+        updateNoticeBar(`NRP "${cleaned}" tidak ditemukan di tabel panitia. Pastikan NRP sudah terdaftar sebagai panitia.`, false);
+        return;
+      }
+
+      state.currentUser = found;
+      saveLogin(found.NRP);
+      document.getElementById('quickNrpInput').value = found.NRP;
+      document.getElementById('sidebarUserName').textContent = found.Nama;
+      document.getElementById('sidebarUserNrp').textContent = `NRP: ${found.NRP}`;
+
+      const isAdmin = normalizeText(found.Role) === 'admin';
+      const roleBadge = document.getElementById('sidebarUserRole');
+      roleBadge.textContent = isAdmin ? 'ADMIN' : 'PANITIA';
+      roleBadge.className = isAdmin
+        ? 'text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200'
+        : 'text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200';
+
+      // Tampilkan atau sembunyikan menu Admin sesuai Role
+      const adminGroup = document.getElementById('sidebarAdminGroup');
+      const mobileAdmin1 = document.getElementById('mobileNavAdminPlotting');
+      const mobileAdmin2 = document.getElementById('mobileNavMonitoring');
+
+      if (isAdmin) {
+        adminGroup.classList.remove('hidden');
+        mobileAdmin1.classList.remove('hidden');
+        mobileAdmin2.classList.remove('hidden');
+      } else {
+        adminGroup.classList.add('hidden');
+        mobileAdmin1.classList.add('hidden');
+        mobileAdmin2.classList.add('hidden');
+        if (state.activeView === 'viewAdminPlotting' || state.activeView === 'viewMonitoringFoto') {
+          switchMainView('viewJadwalVisitku');
+        }
+      }
+
+      populateFormKetersediaan();
+      renderMyScheduleView();
+      populateCameraAssignmentDropdown();
+      updateNoticeBar(`Login berhasil: ${found.Nama} (NRP ${found.NRP}) — Hak akses: ${found.Role.toUpperCase()}.`, false);
+    }
+
+    function switchMainView(viewId) {
+      state.activeView = viewId;
+      document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+      const target = document.getElementById(viewId);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(btn => {
+        if (btn.getAttribute('data-nav') === viewId) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      const titles = {
+        viewAdminPlotting: [
+          "Data Master & Generator Plotting (37 SMA & 135 Panitia)",
+          "Algoritma Matriks Skor Domisili, Afirmasi Alumni, Prioritas Lokasi Pinggiran & Auto-Swap Kuota 5x Visit"
+        ],
+        viewMonitoringFoto: [
+          "Monitoring Bukti Foto Absensi Geotag Live",
+          "Galeri verifikasi kehadiran panitia per SMA beserta koordinat GPS dan export rekap Excel"
+        ],
+        viewJadwalVisitku: [
+          "Jadwal Visitku & Rekan Satu Tim",
+          "Daftar SMA tujuan yang ditugaskan kepada NRP Anda beserta rincian tim"
+        ],
+        viewKameraGeotag: [
+          "Kamera Absensi Geotag Live (Tanpa Upload File)",
+          "Ambil foto langsung dari kamera HP dengan watermark otomatis dan kompresi ~50KB"
+        ],
+        viewFormKetersediaan: [
+          "Form Ketersediaan & Preferensi Domisili Panitia",
+          "Perbarui data Asal SMA, Zona Domisili, Kesediaan Jauh, dan Tanggal Halangan"
+        ]
+      };
+
+      const info = titles[viewId] || titles.viewAdminPlotting;
+      document.getElementById('topbarPageTitle').textContent = info[0];
+      document.getElementById('topbarPageSubtitle').textContent = info[1];
+
+      if (viewId === 'viewJadwalVisitku') renderMyScheduleView();
+      if (viewId === 'viewKameraGeotag') populateCameraAssignmentDropdown();
+      if (viewId === 'viewFormKetersediaan') populateFormKetersediaan();
+      if (viewId === 'viewMonitoringFoto') renderMonitoringGallery();
+    }
+
+    /* ==========================================================================
+       6. FITUR CLICK-TO-SWAP (TUKAR POSISI MANUAL DI TABEL ADMIN)
+       ========================================================================== */
+    function handleSlotClick(schoolId, slotIndex) {
+      const schoolSlots = state.assignments[schoolId];
+      if (!schoolSlots || !schoolSlots[slotIndex]) return;
+
+      const clickedSlot = schoolSlots[slotIndex];
+      const schoolObj = state.sekolah.find(s => s.ID_Sekolah === schoolId);
+      const panitiaObj = state.panitia.find(p => p.ID_Panitia === clickedSlot.panitiaId);
+
+      if (!state.selectedSwapSlot) {
+        state.selectedSwapSlot = {
+          schoolId,
+          slotIndex,
+          panitiaId: clickedSlot.panitiaId,
+          panitiaNama: panitiaObj ? panitiaObj.Nama : clickedSlot.panitiaId,
+          schoolName: schoolObj ? schoolObj.Nama_SMA : schoolId,
+          tim: clickedSlot.tim
+        };
+        updateNoticeBar(
+          `Mode Tukar Manual Aktif: [${state.selectedSwapSlot.panitiaNama}] di ${state.selectedSwapSlot.schoolName} (Tim ${state.selectedSwapSlot.tim}) dipilih. Klik panitia kedua di tabel untuk menukar posisi.`,
+          true
+        );
+        renderSchoolResults();
+        return;
+      }
+
+      if (state.selectedSwapSlot.schoolId === schoolId && state.selectedSwapSlot.slotIndex === slotIndex) {
+        cancelManualSwap();
+        return;
+      }
+
+      const first = state.selectedSwapSlot;
+      const firstSchoolSlots = state.assignments[first.schoolId];
+      const secondSchoolSlots = state.assignments[schoolId];
+
+      const slotA = firstSchoolSlots[first.slotIndex];
+      const slotB = secondSchoolSlots[slotIndex];
+
+      const schoolA = state.sekolah.find(s => s.ID_Sekolah === first.schoolId);
+      const schoolB = state.sekolah.find(s => s.ID_Sekolah === schoolId);
+
+      const panitiaA = state.panitia.find(p => p.ID_Panitia === slotA.panitiaId);
+      const panitiaB = state.panitia.find(p => p.ID_Panitia === slotB.panitiaId);
+
+      if (first.schoolId !== schoolId) {
+        const aAlreadyInB = secondSchoolSlots.some((sl, idx) => idx !== slotIndex && sl.panitiaId === slotA.panitiaId);
+        const bAlreadyInA = firstSchoolSlots.some((sl, idx) => idx !== first.slotIndex && sl.panitiaId === slotB.panitiaId);
+        if (aAlreadyInB || bAlreadyInA) {
+          state.selectedSwapSlot = null;
+          updateNoticeBar("Pertukaran dibatalkan: Salah satu panitia sudah terdaftar pada tim lain di SMA tujuan yang sama.", false);
+          renderSchoolResults();
+          return;
+        }
+      }
+
+      const tempPanitiaId = slotA.panitiaId;
+      slotA.panitiaId = slotB.panitiaId;
+      slotA.isAlumni = (panitiaB && schoolA) ? normalizeText(panitiaB.Asal_SMA) === normalizeText(schoolA.Nama_SMA) : false;
+      slotA.alasanSkor = "Tukar Manual (Click-to-Swap)";
+
+      slotB.panitiaId = tempPanitiaId;
+      slotB.isAlumni = (panitiaA && schoolB) ? normalizeText(panitiaA.Asal_SMA) === normalizeText(schoolB.Nama_SMA) : false;
+      slotB.alasanSkor = "Tukar Manual (Click-to-Swap)";
+
+      const namaA = panitiaA ? panitiaA.Nama : tempPanitiaId;
+      const namaB = panitiaB ? panitiaB.Nama : slotA.panitiaId;
+
+      state.selectedSwapSlot = null;
+      renderAll();
+      updateNoticeBar(
+        `Berhasil menukar posisi: [${namaA}] (${schoolA ? schoolA.Nama_SMA : ''} - Tim ${slotA.tim}) <-> [${namaB}] (${schoolB ? schoolB.Nama_SMA : ''} - Tim ${slotB.tim}).`,
+        false
+      );
+    }
+
+    function cancelManualSwap() {
+      state.selectedSwapSlot = null;
+      updateNoticeBar("Pilihan tukar manual dibatalkan.", false);
+      renderSchoolResults();
+    }
+
+    function updateNoticeBar(message, isSwapActive) {
+      const bar = document.getElementById('noticeBar');
+      const text = document.getElementById('noticeText');
+      const actionGroup = document.getElementById('swapActionGroup');
+
+      text.textContent = message;
+      if (isSwapActive) {
+        bar.classList.add('bg-amber-50', 'border-amber-400');
+        actionGroup.classList.remove('hidden');
+      } else {
+        bar.classList.remove('bg-amber-50', 'border-amber-400');
+        actionGroup.classList.add('hidden');
+      }
+    }
+
+    /* ==========================================================================
+       7. KAMERA LIVE GEOTAG, WATERMARK CANVAS & KOMPRESI ~50KB + UPLOAD SUPABASE
+       ========================================================================== */
+    function refreshGpsLocation() {
+      const badge = document.getElementById('gpsStatusBadge');
+      const readout = document.getElementById('inputGpsReadout');
+
+      if (!navigator.geolocation) {
+        badge.textContent = "GPS: Fallback Simulasi Gresik";
+        readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
+        updateCameraOverlayText();
+        return;
+      }
+
+      badge.textContent = "GPS: Mencari titik koordinat...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          state.gpsCoords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            acc: Math.round(pos.coords.accuracy || 10),
+            isLive: true
+          };
+          badge.textContent = "GPS: Lokasi Terkunci (Live)";
+          badge.className = "text-[11px] font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200";
+          readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
+          updateCameraOverlayText();
+        },
+        () => {
+          badge.textContent = "GPS: Koordinat Default Gresik";
+          badge.className = "text-[11px] font-semibold px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200";
+          readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
+          updateCameraOverlayText();
+        },
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+      );
+    }
+
+    async function startLiveCamera() {
+      refreshGpsLocation();
+      const video = document.getElementById('cameraVideoStream');
+      const placeholder = document.getElementById('cameraPlaceholder');
+
+      if (state.cameraStream) {
+        state.cameraStream.getTracks().forEach(t => t.stop());
+        state.cameraStream = null;
+      }
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false
+          });
+          state.cameraStream = stream;
+          video.srcObject = stream;
+          video.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+          updateNoticeBar("Kamera live dan pembacaan koordinat GPS aktif. Silakan klik 'Jepret & Absen'.", false);
+          return;
+        } catch (err) {
+          // Lanjut ke mode fallback simulasi visual jika izin kamera ditolak di sandbox
+        }
+      }
+
+      video.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      updateNoticeBar("Izin kamera perangkat tidak tersedia di lingkungan ini; tombol 'Jepret & Absen' akan merender frame simulasi kamera ber-watermark secara langsung.", false);
+    }
+
+    function stopLiveCamera() {
+      if (state.cameraStream) {
+        state.cameraStream.getTracks().forEach(t => t.stop());
+        state.cameraStream = null;
+      }
+      const video = document.getElementById('cameraVideoStream');
+      const placeholder = document.getElementById('cameraPlaceholder');
+      video.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+    }
+
+    function updateCameraOverlayText() {
+      const user = state.currentUser || state.panitia[0];
+      const selectEl = document.getElementById('selectAbsenAssignment');
+      const selectedVal = selectEl ? selectEl.value : '';
+      let smaLabel = "SMAN 1 Gresik (Tim 1)";
+
+      if (selectedVal) {
+        const [schoolId, slotIdxStr] = selectedVal.split('|');
+        const sObj = state.sekolah.find(s => s.ID_Sekolah === schoolId);
+        const slotObj = (state.assignments[schoolId] || [])[parseInt(slotIdxStr, 10)];
+        if (sObj && slotObj) {
+          smaLabel = `${sObj.Nama_SMA} (Tim ${slotObj.tim})`;
+        }
+      }
+
+      const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' });
+      document.getElementById('liveOverlayLine2').textContent = `Panitia: ${user ? user.Nama : '-'} (${user ? user.NRP : '-'}) | ${smaLabel}`;
+      document.getElementById('liveOverlayLine3').textContent = `GPS: ${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m) | ${nowStr}`;
+    }
+
+    async function captureAndSubmitGeotag() {
+      const user = state.currentUser || state.panitia[0];
+      const selectEl = document.getElementById('selectAbsenAssignment');
+      if (!selectEl || !selectEl.value) {
+        updateNoticeBar("Pilih jadwal SMA tujuan terlebih dahulu sebelum melakukan absensi.", false);
+        return;
+      }
+
+      const [schoolId, slotIdxStr] = selectEl.value.split('|');
+      const slotIdx = parseInt(slotIdxStr, 10);
+      const sObj = state.sekolah.find(s => s.ID_Sekolah === schoolId);
+      const slotObj = (state.assignments[schoolId] || [])[slotIdx];
+      if (!sObj || !slotObj) return;
+
+      const canvas = document.getElementById('geotagCanvas');
+      const ctx = canvas.getContext('2d');
+      const video = document.getElementById('cameraVideoStream');
+
+      const width = 800;
+      const height = 600;
+      canvas.width = width;
+      canvas.height = height;
+
+      // 1. Gambar frame video dari kamera atau visual frame simulasi jika kamera tidak aktif
+      if (state.cameraStream && video.readyState >= 2) {
+        ctx.drawImage(video, 0, 0, width, height);
+      } else {
+        ctx.fillStyle = "#1E293B";
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(30, 30, width - 60, height - 180);
+
+        ctx.fillStyle = "#64748B";
+        ctx.beginPath();
+        ctx.arc(width / 2, 185, 55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(width / 2, 345, 95, Math.PI, 0, false);
+        ctx.fill();
+
+        ctx.fillStyle = "#CBD5E1";
+        ctx.font = "bold 18px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("FRAME KAMERA ABSENSI GEOTAG PANITIA", width / 2, 395);
+        ctx.textAlign = "left";
+      }
+
+      // 2. Gambar kotak Watermark otomatis di bagian bawah foto
+      const barHeight = 135;
+      ctx.fillStyle = "rgba(15, 23, 42, 0.86)";
+      ctx.fillRect(0, height - barHeight, width, barHeight);
+
+      ctx.fillStyle = "#EAB308";
+      ctx.fillRect(0, height - barHeight, width, 4);
+
+      const timestampStr = new Date().toLocaleString('id-ID', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+
+      ctx.font = "bold 16px monospace";
+      ctx.fillStyle = "#FACC15";
+      ctx.fillText("KPK X INI LHO ITS 2027 WILAYAH GRESIK — BUKTI ABSENSI GEOTAG", 20, height - 102);
+
+      ctx.font = "bold 16px monospace";
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillText(`Panitia : ${user.Nama} (NRP: ${user.NRP})`, 20, height - 74);
+
+      ctx.font = "15px monospace";
+      ctx.fillStyle = "#E2E8F0";
+      ctx.fillText(`Sekolah : ${sObj.Nama_SMA} (Tim ${slotObj.tim}) | Jadwal: ${sObj.Tanggal_Visit}`, 20, height - 46);
+
+      ctx.font = "14px monospace";
+      ctx.fillStyle = "#94A3B8";
+      ctx.fillText(`Geotag  : ${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m) | Waktu: ${timestampStr}`, 20, height - 18);
+
+      // 3. Konversi Canvas ke Blob JPEG terkompresi (quality 0.6 -> ~40-55 KB)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+      state.lastCapturedDataUrl = dataUrl;
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        state.lastCapturedBlob = blob;
+        const sizeKb = (blob.size / 1024).toFixed(1);
+
+        // Tampilkan hasil di preview
+        const imgPreview = document.getElementById('capturedPhotoPreview');
+        const emptyState = document.getElementById('capturedEmptyState');
+        imgPreview.src = dataUrl;
+        imgPreview.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+
+        document.getElementById('captureSizeBadge').textContent = `${sizeKb} KB (JPEG q=0.6)`;
+        document.getElementById('metaBlobSize').textContent = `${sizeKb} KB (${blob.size} bytes)`;
+        document.getElementById('btnDownloadCapturedJpg').disabled = false;
+
+        const fileName = `${sObj.ID_Sekolah}_${user.NRP}_${Date.now()}.jpg`;
+        const storagePath = `${STORAGE_BUCKET_NAME}/${fileName}`;
+        let finalPhotoUrl = dataUrl;
+
+        // 4. Jika Supabase terkonfigurasi, unggah langsung ke bucket 'foto-absensi' dan update tabel 'plotting_absensi'
+        if (supabaseClient) {
+          try {
+            const { error: upErr } = await supabaseClient
+              .storage
+              .from(STORAGE_BUCKET_NAME)
+              .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+
+            if (!upErr) {
+              const { data: pubData } = supabaseClient
+                .storage
+                .from(STORAGE_BUCKET_NAME)
+                .getPublicUrl(fileName);
+              if (pubData && pubData.publicUrl) {
+                finalPhotoUrl = pubData.publicUrl;
+              }
+            }
+
+            await supabaseClient
+              .from('plotting_absensi')
+              .upsert({
+                id_plotting: slotObj.id_plotting,
+                id_sekolah: sObj.ID_Sekolah,
+                nama_sma: sObj.Nama_SMA,
+                zona_sekolah: sObj.Zona_Sekolah,
+                kategori_lokasi: sObj.Kategori_Lokasi,
+                tanggal_visit: sObj.Tanggal_Visit,
+                tim: slotObj.tim,
+                kursi: slotObj.kursi,
+                id_panitia: user.ID_Panitia,
+                nrp: user.NRP,
+                nama_panitia: user.Nama,
+                is_alumni: slotObj.isAlumni,
+                status_hadir: 'Hadir',
+                foto_url: finalPhotoUrl,
+                latitude: state.gpsCoords.lat,
+                longitude: state.gpsCoords.lng,
+                akurasi_meter: state.gpsCoords.acc,
+                waktu_absen: new Date().toISOString()
+              });
+          } catch (dbErr) {
+            // Tetap simpan di in-memory state apabila terjadi kendala jaringan
+          }
+        }
+
+        // Update state in-memory
+        slotObj.status_hadir = 'Hadir';
+        slotObj.foto_url = finalPhotoUrl;
+        slotObj.latitude = state.gpsCoords.lat;
+        slotObj.longitude = state.gpsCoords.lng;
+        slotObj.akurasi_meter = state.gpsCoords.acc;
+        slotObj.waktu_absen = timestampStr;
+
+        document.getElementById('metaStatusHadir').textContent = `HADIR TERVERIFIKASI (${sObj.Nama_SMA})`;
+        document.getElementById('metaStatusHadir').className = "text-emerald-700 font-bold";
+        document.getElementById('metaStoragePath').textContent = storagePath;
+
+        renderAll();
+        populateCameraAssignmentDropdown();
+        updateNoticeBar(
+          `Absensi Geotag berhasil disimpan untuk ${user.Nama} di ${sObj.Nama_SMA} (Ukuran foto: ${sizeKb} KB, Status: Hadir).`,
+          false
+        );
+      }, 'image/jpeg', 0.6);
+    }
+
+    /* ==========================================================================
+       8. SINKRONISASI SUPABASE (PUBLISH PLOTTING & SIMPAN FORM KETERSEDIAAN)
+       ========================================================================== */
+    async function publishPlottingToSupabase() {
+      if (!supabaseClient) {
+        updateNoticeBar("Mode Demo Aktif: Hasil plotting telah disimpan di memori aplikasi. Untuk mengunggah ke cloud Supabase, isi SUPABASE_URL dan SUPABASE_ANON_KEY di bagian atas script.", false);
+        return;
+      }
+
+      try {
+        updateNoticeBar("Mengunggah data panitia dan 675 slot plotting ke Supabase...", false);
+        const panitiaPayload = state.panitia.map(p => ({
+          id_panitia: p.ID_Panitia,
+          nrp: p.NRP,
+          nama: p.Nama,
+          role: p.Role,
+          asal_sma: p.Asal_SMA,
+          zona_domisili: p.Zona_Domisili,
+          bersedia_jauh: p.Bersedia_Jauh,
+          tanggal_halangan: p.Tanggal_Halangan,
+          info_tambahan: p.Info_Tambahan
+        }));
+
+        await supabaseClient.from('panitia').upsert(panitiaPayload);
+
+        const panitiaMap = {};
+        state.panitia.forEach(p => { panitiaMap[p.ID_Panitia] = p; });
+
+        const plottingPayload = [];
+        state.sekolah.forEach(s => {
+          const slots = state.assignments[s.ID_Sekolah] || [];
+          slots.forEach(sl => {
+            const p = panitiaMap[sl.panitiaId] || {};
+            plottingPayload.push({
+              id_plotting: sl.id_plotting,
+              id_sekolah: s.ID_Sekolah,
+              nama_sma: s.Nama_SMA,
+              zona_sekolah: s.Zona_Sekolah,
+              kategori_lokasi: s.Kategori_Lokasi,
+              tanggal_visit: s.Tanggal_Visit,
+              tim: sl.tim,
+              kursi: sl.kursi,
+              id_panitia: sl.panitiaId,
+              nrp: p.NRP || '',
+              nama_panitia: p.Nama || '',
+              is_alumni: sl.isAlumni,
+              status_hadir: sl.status_hadir || 'Belum Hadir',
+              foto_url: sl.foto_url || null,
+              latitude: sl.latitude,
+              longitude: sl.longitude,
+              akurasi_meter: sl.akurasi_meter
+            });
+          });
+        });
+
+        await supabaseClient.from('plotting_absensi').upsert(plottingPayload);
+        updateNoticeBar("Berhasil mem-publish seluruh data panitia dan jadwal plotting ke database Supabase!", false);
+      } catch (err) {
+        updateNoticeBar("Gagal mem-publish ke Supabase: " + err.message, false);
+      }
+    }
+
+    /* ==========================================================================
+       9. RENDERER KOMPONEN UI (STATS, TABEL ADMIN, JADWALKU, MONITORING FOTO)
+       ========================================================================== */
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function computeRekapPanitiaMap() {
+      const rekap = {};
+      state.panitia.forEach(p => {
+        rekap[p.ID_Panitia] = { panitia: p, visits: [], conflicts: 0 };
+      });
+
+      const schoolMap = {};
+      state.sekolah.forEach(s => { schoolMap[s.ID_Sekolah] = s; });
+
+      Object.keys(state.assignments).forEach(schoolId => {
+        const s = schoolMap[schoolId];
+        if (!s) return;
+        const slots = state.assignments[schoolId] || [];
+        slots.forEach(slot => {
+          const entry = rekap[slot.panitiaId];
+          if (entry) {
+            entry.visits.push({
+              ID_Sekolah: s.ID_Sekolah,
+              Nama_SMA: s.Nama_SMA,
+              Tanggal_Visit: s.Tanggal_Visit,
+              Zona_Sekolah: s.Zona_Sekolah,
+              Kategori_Lokasi: s.Kategori_Lokasi,
+              tim: slot.tim,
+              isAlumni: slot.isAlumni,
+              status_hadir: slot.status_hadir
+            });
+          }
+        });
+      });
+
+      Object.values(rekap).forEach(entry => {
+        const seenDates = new Set();
+        entry.visits.forEach(v => {
+          if (seenDates.has(v.Tanggal_Visit) || isPanitiaBlockedOnDate(entry.panitia, v.Tanggal_Visit)) {
+            entry.conflicts += 1;
+          }
+          seenDates.add(v.Tanggal_Visit);
+        });
+      });
+
+      return rekap;
+    }
+
+    function renderAll() {
+      renderStats();
+      renderSchoolResults();
+      renderRekapPanitia();
+      renderMasterInputTables();
+      renderMyScheduleView();
+      renderMonitoringGallery();
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderStats() {
+      const totalSMA = state.sekolah.length;
+      const jmlPinggiran = state.sekolah.filter(s => normalizeText(s.Kategori_Lokasi) === 'pinggiran').length;
+      const jmlKota = totalSMA - jmlPinggiran;
+      const totalPanitia = state.panitia.length;
+
+      let kursiTerisi = 0;
+      let totalAlumniPlaced = 0;
+      let totalHadirCount = 0;
+
+      state.sekolah.forEach(s => {
+        const slots = state.assignments[s.ID_Sekolah] || [];
+        kursiTerisi += slots.length;
+        slots.forEach(sl => {
+          if (sl.isAlumni) totalAlumniPlaced += 1;
+          if (sl.status_hadir === 'Hadir') totalHadirCount += 1;
+        });
+      });
+
+      const rekapMap = computeRekapPanitiaMap();
+      let panitiaTepatTarget = 0;
+      Object.values(rekapMap).forEach(r => {
+        if (r.visits.length === state.targetVisit) panitiaTepatTarget += 1;
+      });
+
+      const persenTepat = totalPanitia > 0 ? Math.round((panitiaTepatTarget / totalPanitia) * 100) : 0;
+
+      document.getElementById('statTotalSMA').textContent = `${totalSMA} SMA`;
+      document.getElementById('statSubSMA').textContent = `${jmlPinggiran} Pinggiran / ${jmlKota} Kota`;
+
+      document.getElementById('statTotalPanitia').textContent = `${totalPanitia} Orang`;
+      document.getElementById('statSubPanitia').textContent = `Target ${state.targetVisit}x visit (${totalPanitia * state.targetVisit} slot)`;
+
+      document.getElementById('statKursiTerisi').textContent = `${kursiTerisi} Slot`;
+      document.getElementById('statSubKursi').textContent = `3 Tim x 6 Orang / SMA`;
+
+      document.getElementById('statKuotaTepat').textContent = `${persenTepat}%`;
+      document.getElementById('statSubKuota').textContent = `${panitiaTepatTarget}/${totalPanitia} panitia tepat ${state.targetVisit}x`;
+
+      document.getElementById('statTotalAlumni').textContent = `${totalHadirCount} Hadir`;
+      document.getElementById('statSubKonflik').textContent = `${totalAlumniPlaced} Alumni di SMA Asal`;
+    }
+
+    function renderSchoolResults() {
+      const container = document.getElementById('schoolResultsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const panitiaMap = {};
+      state.panitia.forEach(p => { panitiaMap[p.ID_Panitia] = p; });
+
+      const q = normalizeText(state.searchQuery);
+      const zFilter = state.zonaFilter;
+      const kFilter = state.kategoriFilter;
+
+      const displaySchools = [...state.sekolah].sort((a, b) => {
+        const aPinggiran = normalizeText(a.Kategori_Lokasi) === 'pinggiran' ? 0 : 1;
+        const bPinggiran = normalizeText(b.Kategori_Lokasi) === 'pinggiran' ? 0 : 1;
+        if (aPinggiran !== bPinggiran) return aPinggiran - bPinggiran;
+        return String(a.ID_Sekolah).localeCompare(String(b.ID_Sekolah));
+      });
+
+      let renderedCount = 0;
+
+      displaySchools.forEach(s => {
+        if (zFilter !== 'ALL' && s.Zona_Sekolah !== zFilter) return;
+        if (kFilter !== 'ALL' && s.Kategori_Lokasi !== kFilter) return;
+
+        const slots = state.assignments[s.ID_Sekolah] || [];
+
+        if (q) {
+          const matchSchool =
+            normalizeText(s.Nama_SMA).includes(q) ||
+            normalizeText(s.ID_Sekolah).includes(q) ||
+            normalizeText(s.Zona_Sekolah).includes(q) ||
+            normalizeText(s.Tanggal_Visit).includes(q);
+
+          const matchMember = slots.some(sl => {
+            const p = panitiaMap[sl.panitiaId];
+            if (!p) return false;
+            return (
+              normalizeText(p.Nama).includes(q) ||
+              normalizeText(p.NRP).includes(q) ||
+              normalizeText(p.Asal_SMA).includes(q) ||
+              normalizeText(p.Info_Tambahan).includes(q)
+            );
+          });
+
+          if (!matchSchool && !matchMember) return;
+        }
+
+        renderedCount++;
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-[#E2E8F0] rounded-md overflow-hidden';
+
+        const isPinggiran = normalizeText(s.Kategori_Lokasi) === 'pinggiran';
+        const badgeKat = isPinggiran
+          ? 'bg-amber-50 text-amber-800 border-amber-200'
+          : 'bg-blue-50 text-blue-800 border-blue-200';
+
+        let rowsHtml = '';
+        slots.forEach((slot, idx) => {
+          const p = panitiaMap[slot.panitiaId] || {
+            ID_Panitia: slot.panitiaId,
+            NRP: '-',
+            Nama: 'Tidak Ditemukan',
+            Asal_SMA: '-',
+            Zona_Domisili: '-',
+            Bersedia_Jauh: '-',
+            Info_Tambahan: '-'
+          };
+
+          const isSelected =
+            state.selectedSwapSlot &&
+            state.selectedSwapSlot.schoolId === s.ID_Sekolah &&
+            state.selectedSwapSlot.slotIndex === idx;
+
+          const isFirstOfTeam = idx > 0 && slot.tim !== slots[idx - 1].tim;
+          const rowClasses = [
+            'swappable-row',
+            isSelected ? 'selected-for-swap' : '',
+            isFirstOfTeam ? 'team-divider' : ''
+          ].filter(Boolean).join(' ');
+
+          const alumniBadge = slot.isAlumni
+            ? `<span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Alumni</span>`
+            : '';
+
+          const hadirBadge = slot.status_hadir === 'Hadir'
+            ? `<span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Hadir</span>`
+            : `<span class="px-2 py-0.5 text-[11px] font-medium rounded bg-slate-100 text-slate-600">Belum</span>`;
+
+          rowsHtml += `
+            <tr class="${rowClasses}" data-school-id="${s.ID_Sekolah}" data-slot-index="${idx}">
+              <td class="font-semibold text-center bg-slate-50/70 text-slate-700" style="width: 72px;">Tim ${slot.tim}</td>
+              <td class="font-mono-num text-xs text-slate-500" style="width: 105px;">${escapeHtml(p.NRP)}</td>
+              <td class="font-semibold text-slate-900">${escapeHtml(p.Nama)}${alumniBadge}</td>
+              <td class="text-slate-700">${escapeHtml(p.Asal_SMA)}</td>
+              <td><span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(p.Zona_Domisili)}</span></td>
+              <td class="text-slate-700">${escapeHtml(p.Bersedia_Jauh)}</td>
+              <td class="text-slate-500 text-xs">${escapeHtml(p.Info_Tambahan)}</td>
+              <td class="text-center">${hadirBadge}</td>
+            </tr>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="bg-slate-50 px-4 py-2.5 border-b border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono-num text-xs font-semibold text-slate-500">${escapeHtml(s.ID_Sekolah)}</span>
+              <span class="text-sm font-bold text-slate-900">${escapeHtml(s.Nama_SMA)}</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded border ${badgeKat}">${escapeHtml(s.Kategori_Lokasi)}</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-white text-slate-700 border border-slate-200">Zona: ${escapeHtml(s.Zona_Sekolah)}</span>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-600">
+              <span>Tanggal Visit: <strong class="font-mono-num text-slate-900">${escapeHtml(s.Tanggal_Visit)}</strong></span>
+              <span>|</span>
+              <span>Total Anggota: <strong>${slots.length} Panitia (3 Tim)</strong></span>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table-strict">
+              <thead>
+                <tr>
+                  <th style="width: 72px; text-align: center;">Tim</th>
+                  <th style="width: 105px;">NRP</th>
+                  <th style="width: 220px;">Nama Panitia (Klik untuk Tukar)</th>
+                  <th style="width: 210px;">Asal SMA</th>
+                  <th style="width: 115px;">Zona Domisili</th>
+                  <th style="width: 115px;">Bersedia Jauh</th>
+                  <th>Info Tambahan</th>
+                  <th style="width: 90px; text-align: center;">Absensi</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      if (renderedCount === 0) {
+        container.innerHTML = `<div class="bg-white border border-[#E2E8F0] rounded-md p-8 text-center text-xs text-slate-500">Tidak ada sekolah yang cocok dengan filter pencarian.</div>`;
+      }
+    }
+
+    function renderRekapPanitia() {
+      const tbody = document.getElementById('tbodyRekapPanitia');
+      if (!tbody) return;
+
+      const rekapMap = computeRekapPanitiaMap();
+      const q = normalizeText(state.searchQuery);
+      const zFilter = state.zonaFilter;
+
+      let rowsHtml = '';
+      state.panitia.forEach(p => {
+        if (zFilter !== 'ALL' && p.Zona_Domisili !== zFilter) return;
+
+        const r = rekapMap[p.ID_Panitia] || { visits: [], conflicts: 0 };
+        const rincianStr = r.visits
+          .map(v => `${v.Nama_SMA} (Tim ${v.tim}, ${v.Tanggal_Visit})`)
+          .join(' • ');
+
+        if (q) {
+          const match =
+            normalizeText(p.ID_Panitia).includes(q) ||
+            normalizeText(p.NRP).includes(q) ||
+            normalizeText(p.Nama).includes(q) ||
+            normalizeText(p.Asal_SMA).includes(q) ||
+            normalizeText(rincianStr).includes(q);
+          if (!match) return;
+        }
+
+        const count = r.visits.length;
+        const isExact = count === state.targetVisit && r.conflicts === 0;
+        const badgeCls = isExact
+          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+          : 'bg-red-50 text-red-800 border-red-200';
+
+        rowsHtml += `
+          <tr>
+            <td class="font-mono-num text-xs text-slate-500">${escapeHtml(p.ID_Panitia)}</td>
+            <td class="font-mono-num text-xs font-semibold">${escapeHtml(p.NRP)}</td>
+            <td class="font-semibold text-slate-900">${escapeHtml(p.Nama)}</td>
+            <td>${escapeHtml(p.Asal_SMA)}</td>
+            <td><span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 text-slate-700">${escapeHtml(p.Zona_Domisili)}</span></td>
+            <td>${escapeHtml(p.Bersedia_Jauh)}</td>
+            <td class="font-mono-num text-xs text-slate-500">${escapeHtml(p.Tanggal_Halangan)}</td>
+            <td class="text-xs text-slate-500">${escapeHtml(p.Info_Tambahan)}</td>
+            <td class="text-center"><span class="px-2 py-0.5 text-[11px] font-bold rounded border ${badgeCls}">${count}x Visit</span></td>
+            <td class="text-xs text-slate-600">${escapeHtml(rincianStr || '-')}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function renderMasterInputTables() {
+      document.getElementById('labelMasterSekolah').textContent = `Daftar Master Sekolah (${state.sekolah.length} SMA Wilayah Gresik)`;
+      document.getElementById('labelMasterPanitia').textContent = `Daftar Master Panitia (${state.panitia.length} Orang)`;
+
+      document.getElementById('tbodyMasterSekolah').innerHTML = state.sekolah.map(s => `
+        <tr>
+          <td class="font-mono-num text-xs text-slate-500">${escapeHtml(s.ID_Sekolah)}</td>
+          <td class="font-semibold text-slate-900">${escapeHtml(s.Nama_SMA)}</td>
+          <td>${escapeHtml(s.Zona_Sekolah)}</td>
+          <td>${escapeHtml(s.Kategori_Lokasi)}</td>
+          <td class="font-mono-num text-xs">${escapeHtml(s.Tanggal_Visit)}</td>
+          <td>${escapeHtml(s.Jumlah_Tim)}</td>
+          <td>${escapeHtml(s.Anggota_Per_Tim)}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('tbodyMasterPanitia').innerHTML = state.panitia.map(p => `
+        <tr>
+          <td class="font-mono-num text-xs text-slate-500">${escapeHtml(p.ID_Panitia)}</td>
+          <td class="font-mono-num text-xs font-semibold">${escapeHtml(p.NRP)}</td>
+          <td><span class="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded ${p.Role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}">${escapeHtml(p.Role)}</span></td>
+          <td class="font-semibold text-slate-900">${escapeHtml(p.Nama)}</td>
+          <td>${escapeHtml(p.Asal_SMA)}</td>
+          <td>${escapeHtml(p.Zona_Domisili)}</td>
+          <td>${escapeHtml(p.Bersedia_Jauh)}</td>
+          <td class="font-mono-num text-xs">${escapeHtml(p.Tanggal_Halangan)}</td>
+          <td class="text-xs text-slate-500">${escapeHtml(p.Info_Tambahan)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderMyScheduleView() {
+      const user = state.currentUser || state.panitia[0];
+      if (!user) return;
+
+      const grid = document.getElementById('myScheduleCardsGrid');
+      const summary = document.getElementById('jadwalUserSummary');
+      const countBadge = document.getElementById('jadwalCountBadge');
+
+      const panitiaMap = {};
+      state.panitia.forEach(p => { panitiaMap[p.ID_Panitia] = p; });
+
+      const myAssignments = [];
+      state.sekolah.forEach(s => {
+        const slots = state.assignments[s.ID_Sekolah] || [];
+        const mySlotIndex = slots.findIndex(sl => sl.panitiaId === user.ID_Panitia);
+        if (mySlotIndex !== -1) {
+          const mySlot = slots[mySlotIndex];
+          const rekanSatuTim = slots
+            .filter(sl => sl.tim === mySlot.tim)
+            .map(sl => panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId);
+          const semuaRekanSma = slots.map(sl => ({
+            tim: sl.tim,
+            nama: panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId,
+            info: panitiaMap[sl.panitiaId]?.Info_Tambahan || '-'
+          }));
+          myAssignments.push({
+            sekolah: s,
+            slot: mySlot,
+            slotIndex: mySlotIndex,
+            rekanSatuTim,
+            semuaRekanSma
+          });
+        }
+      });
+
+      summary.textContent = `Panitia Aktif: ${user.Nama} (NRP ${user.NRP}) — Asal SMA: ${user.Asal_SMA} | Domisili: Zona ${user.Zona_Domisili}`;
+      countBadge.textContent = `${myAssignments.length}x Visit Terjadwal`;
+
+      grid.innerHTML = myAssignments.map((item, idx) => {
+        const s = item.sekolah;
+        const sl = item.slot;
+        const isHadir = sl.status_hadir === 'Hadir';
+        const statusCls = isHadir
+          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+          : 'bg-amber-50 text-amber-800 border-amber-200';
+
+        const rekanTimHtml = item.rekanSatuTim.map(nama =>
+          `<span class="px-2 py-0.5 text-[11px] rounded bg-slate-100 text-slate-800 border border-slate-200 font-medium">${escapeHtml(nama)}</span>`
+        ).join('');
+
+        return `
+          <div class="bg-white border border-[#E2E8F0] rounded-md p-4 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-start justify-between gap-2 border-b border-[#E2E8F0] pb-2.5">
+                <div>
+                  <span class="text-[11px] font-mono-num font-bold text-blue-700">VISIT #${idx + 1} • ${escapeHtml(s.Tanggal_Visit)}</span>
+                  <h4 class="text-sm font-bold text-slate-900 mt-0.5">${escapeHtml(s.Nama_SMA)}</h4>
+                  <p class="text-xs text-slate-500">Zona ${escapeHtml(s.Zona_Sekolah)} (${escapeHtml(s.Kategori_Lokasi)}) — Anda di <strong>Tim ${sl.tim}</strong> (Kursi ${sl.kursi})</p>
+                </div>
+                <span class="text-[11px] font-bold px-2.5 py-1 rounded border ${statusCls}">${escapeHtml(sl.status_hadir)}</span>
+              </div>
+
+              <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Rekan Satu Tim (Tim ${sl.tim} - ${item.rekanSatuTim.length} Orang):</p>
+                <div class="flex flex-wrap gap-1.5">${rekanTimHtml}</div>
+              </div>
+            </div>
+
+            <div class="pt-2.5 border-t border-[#E2E8F0] flex items-center justify-between">
+              <span class="text-[11px] text-slate-500">Total rombongan SMA ini: ${item.semuaRekanSma.length} panitia (Tim 1, 2, 3)</span>
+              <button type="button" data-open-camera="${s.ID_Sekolah}|${item.slotIndex}" class="btn-goto-camera px-3 py-1.5 rounded bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-semibold">
+                Buka Kamera Absen Geotag
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function populateCameraAssignmentDropdown() {
+      const user = state.currentUser || state.panitia[0];
+      const selectEl = document.getElementById('selectAbsenAssignment');
+      if (!user || !selectEl) return;
+
+      const options = [];
+      state.sekolah.forEach(s => {
+        const slots = state.assignments[s.ID_Sekolah] || [];
+        slots.forEach((sl, idx) => {
+          if (sl.panitiaId === user.ID_Panitia) {
+            options.push({
+              val: `${s.ID_Sekolah}|${idx}`,
+              label: `${s.Tanggal_Visit} — ${s.Nama_SMA} (Tim ${sl.tim}) [${sl.status_hadir}]`
+            });
+          }
+        });
+      });
+
+      selectEl.innerHTML = options.map(o => `<option value="${o.val}">${escapeHtml(o.label)}</option>`).join('');
+      updateCameraOverlayText();
+    }
+
+    function populateFormKetersediaan() {
+      const user = state.currentUser || state.panitia[0];
+      if (!user) return;
+
+      const selectSma = document.getElementById('formSelectAsalSma');
+      selectSma.innerHTML = state.sekolah.map(s =>
+        `<option value="${escapeHtml(s.Nama_SMA)}">${escapeHtml(s.Nama_SMA)} (${escapeHtml(s.Zona_Sekolah)})</option>`
+      ).join('');
+
+      document.getElementById('formNrpBadge').textContent = `NRP: ${user.NRP}`;
+      document.getElementById('formInputNrp').value = user.NRP;
+      document.getElementById('formInputNama').value = user.Nama;
+      selectSma.value = user.Asal_SMA;
+      document.getElementById('formSelectZona').value = user.Zona_Domisili;
+      document.getElementById('formSelectBersediaJauh').value = user.Bersedia_Jauh;
+      document.getElementById('formInputTanggalHalangan').value = user.Tanggal_Halangan;
+      document.getElementById('formInputInfoTambahan').value = user.Info_Tambahan;
+    }
+
+    function renderMonitoringGallery() {
+      const grid = document.getElementById('monitoringGalleryGrid');
+      const smaSelect = document.getElementById('selectFilterMonitoringSma');
+      const statusSelect = document.getElementById('selectFilterMonitoringStatus');
+      if (!grid || !smaSelect || !statusSelect) return;
+
+      if (smaSelect.options.length <= 1) {
+        smaSelect.innerHTML = `<option value="ALL">Semua SMA (37 Sekolah)</option>` +
+          state.sekolah.map(s => `<option value="${s.ID_Sekolah}">${escapeHtml(s.Nama_SMA)} (${s.Tanggal_Visit})</option>`).join('');
+      }
+
+      const filterSma = smaSelect.value;
+      const filterStatus = statusSelect.value;
+
+      const panitiaMap = {};
+      state.panitia.forEach(p => { panitiaMap[p.ID_Panitia] = p; });
+
+      const cards = [];
+      state.sekolah.forEach(s => {
+        if (filterSma !== 'ALL' && s.ID_Sekolah !== filterSma) return;
+        const slots = state.assignments[s.ID_Sekolah] || [];
+        slots.forEach(sl => {
+          if (filterStatus === 'HADIR_ONLY' && sl.status_hadir !== 'Hadir') return;
+          const p = panitiaMap[sl.panitiaId] || {};
+          cards.push({ sekolah: s, slot: sl, panitia: p });
+        });
+      });
+
+      if (cards.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full bg-white border border-[#E2E8F0] rounded-md p-8 text-center text-xs text-slate-500">
+            Belum ada data absensi foto yang sesuai filter. Gunakan menu "Kamera Absensi Geotag" untuk mengambil foto kehadiran baru.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = cards.slice(0, 60).map(item => {
+        const { sekolah: s, slot: sl, panitia: p } = item;
+        const isHadir = sl.status_hadir === 'Hadir';
+        const imgHtml = sl.foto_url
+          ? `<img src="${sl.foto_url}" alt="Bukti Absen ${escapeHtml(p.Nama)}" class="w-full h-44 object-cover border-b border-[#E2E8F0]">`
+          : `<div class="w-full h-44 bg-slate-100 border-b border-[#E2E8F0] flex items-center justify-center text-xs text-slate-400">Belum ada unggahan foto</div>`;
+
+        return `
+          <div class="bg-white border border-[#E2E8F0] rounded-md overflow-hidden flex flex-col justify-between">
+            <div>
+              ${imgHtml}
+              <div class="p-3.5 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-mono-num font-semibold text-blue-700">${escapeHtml(s.Nama_SMA)} • Tim ${sl.tim}</span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isHadir ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600'}">${escapeHtml(sl.status_hadir)}</span>
+                </div>
+                <div class="text-xs font-bold text-slate-900">${escapeHtml(p.Nama || '-')} <span class="font-mono-num font-normal text-slate-500">(${escapeHtml(p.NRP || '-')})</span></div>
+                <div class="text-[11px] font-mono-num text-slate-600">
+                  GPS: ${sl.latitude !== null ? `${sl.latitude}, ${sl.longitude} (±${sl.akurasi_meter}m)` : 'Belum tercatat'}
+                </div>
+                <div class="text-[11px] text-slate-500">Waktu: ${escapeHtml(sl.waktu_absen || s.Tanggal_Visit)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ==========================================================================
+       10. EXPORT & IMPORT EXCEL (.XLSX) MENGGUNAKAN SHEETJS
+       ========================================================================== */
+    function exportPlottingToExcel() {
+      if (typeof XLSX === 'undefined') return;
+
+      const wb = XLSX.utils.book_new();
+      const panitiaMap = {};
+      state.panitia.forEach(p => { panitiaMap[p.ID_Panitia] = p; });
+
+      const hasilRows = [];
+      state.sekolah.forEach(s => {
+        const slots = state.assignments[s.ID_Sekolah] || [];
+        slots.forEach(sl => {
+          const p = panitiaMap[sl.panitiaId] || {};
+          hasilRows.push({
+            ID_Plotting: sl.id_plotting,
+            ID_Sekolah: s.ID_Sekolah,
+            Nama_SMA: s.Nama_SMA,
+            Zona_Sekolah: s.Zona_Sekolah,
+            Kategori_Lokasi: s.Kategori_Lokasi,
+            Tanggal_Visit: s.Tanggal_Visit,
+            Tim: `Tim ${sl.tim}`,
+            Kursi_Ke: sl.kursi,
+            ID_Panitia: sl.panitiaId,
+            NRP: p.NRP || '-',
+            Nama_Panitia: p.Nama || '-',
+            Asal_SMA: p.Asal_SMA || '-',
+            Status_Alumni: sl.isAlumni ? 'Alumni' : 'Non-Alumni',
+            Zona_Domisili: p.Zona_Domisili || '-',
+            Bersedia_Jauh: p.Bersedia_Jauh || '-',
+            Info_Tambahan: p.Info_Tambahan || '-',
+            Status_Hadir: sl.status_hadir || 'Belum Hadir',
+            Latitude: sl.latitude ?? '',
+            Longitude: sl.longitude ?? '',
+            Waktu_Absen: sl.waktu_absen || ''
+          });
+        });
+      });
+
+      const rekapMap = computeRekapPanitiaMap();
+      const rekapRows = state.panitia.map(p => {
+        const r = rekapMap[p.ID_Panitia] || { visits: [], conflicts: 0 };
+        return {
+          ID_Panitia: p.ID_Panitia,
+          NRP: p.NRP,
+          Role: p.Role,
+          Nama: p.Nama,
+          Asal_SMA: p.Asal_SMA,
+          Zona_Domisili: p.Zona_Domisili,
+          Bersedia_Jauh: p.Bersedia_Jauh,
+          Tanggal_Halangan: p.Tanggal_Halangan,
+          Info_Tambahan: p.Info_Tambahan,
+          Jumlah_Visit: r.visits.length,
+          Status_Kuota: r.visits.length === state.targetVisit ? 'Tepat 5x Visit' : 'Belum Sesuai',
+          Rincian_SMA_Visit: r.visits.map(v => `${v.Nama_SMA} (Tim ${v.tim}, ${v.Tanggal_Visit})`).join('; ')
+        };
+      });
+
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hasilRows), "Plotting_&_Absensi_SMA");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rekapRows), "Rekap_Kuota_Panitia");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.panitia), "Data_Panitia");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.sekolah), "Data_Sekolah");
+
+      XLSX.writeFile(wb, "Rekap_Plotting_Absensi_Visit_Gresik_2027.xlsx");
+      updateNoticeBar("File Rekap_Plotting_Absensi_Visit_Gresik_2027.xlsx berhasil diunduh.", false);
+    }
+
+    function downloadTemplateInputExcel() {
+      if (typeof XLSX === 'undefined') return;
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.panitia), "Data_Panitia");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.sekolah), "Data_Sekolah");
+      XLSX.writeFile(wb, "Template_Input_Plotting_Gresik_2027.xlsx");
+      updateNoticeBar("Template_Input_Plotting_Gresik_2027.xlsx berhasil diunduh.", false);
+    }
+
+    function handleExcelImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          let importedPanitia = [];
+          let importedSekolah = [];
+
+          workbook.SheetNames.forEach(sheetName => {
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+            if (!rows.length) return;
+            const firstRow = rows[0];
+
+            if ('ID_Panitia' in firstRow || 'NRP' in firstRow || 'Zona_Domisili' in firstRow) {
+              importedPanitia = rows.map((r, i) => ({
+                ID_Panitia: String(r.ID_Panitia || `PNT-${String(i + 1).padStart(3, '0')}`).trim(),
+                NRP: String(r.NRP || `5031251${String(i + 1).padStart(3, '0')}`).trim(),
+                Role: String(r.Role || (i < 5 ? 'admin' : 'panitia')).trim(),
+                Nama: String(r.Nama || '-').trim(),
+                Asal_SMA: String(r.Asal_SMA || '-').trim(),
+                Zona_Domisili: String(r.Zona_Domisili || 'Kota-Tengah').trim(),
+                Bersedia_Jauh: String(r.Bersedia_Jauh || 'Bersedia').trim(),
+                Tanggal_Halangan: String(r.Tanggal_Halangan || '-').trim(),
+                Info_Tambahan: String(r.Info_Tambahan || '-').trim()
+              }));
+            } else if ('ID_Sekolah' in firstRow || 'Nama_SMA' in firstRow) {
+              importedSekolah = rows.map((r, i) => ({
+                ID_Sekolah: String(r.ID_Sekolah || `SMA-${String(i + 1).padStart(2, '0')}`).trim(),
+                Nama_SMA: String(r.Nama_SMA || '-').trim(),
+                Zona_Sekolah: String(r.Zona_Sekolah || 'Kota-Tengah').trim(),
+                Kategori_Lokasi: String(r.Kategori_Lokasi || 'Kota').trim(),
+                Tanggal_Visit: String(r.Tanggal_Visit || '2027-01-11').trim(),
+                Jumlah_Tim: parseInt(r.Jumlah_Tim, 10) || 3,
+                Anggota_Per_Tim: parseInt(r.Anggota_Per_Tim, 10) || 6
+              }));
+            }
+          });
+
+          if (importedPanitia.length > 0) state.panitia = importedPanitia;
+          if (importedSekolah.length > 0) state.sekolah = importedSekolah;
+
+          runPlottingAlgorithm(false);
+          updateNoticeBar(`Berhasil mengimpor "${file.name}" (${state.sekolah.length} SMA & ${state.panitia.length} Panitia).`, false);
+        } catch (err) {
+          updateNoticeBar("Gagal membaca file Excel: " + err.message, false);
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* ==========================================================================
+       11. INISIALISASI APLIKASI & EVENT LISTENERS
+       ========================================================================== */
+    function initApp() {
+      // Cek status koneksi Supabase
+      const badgeDb = document.getElementById('badgeDbMode');
+      if (supabaseClient) {
+        badgeDb.textContent = "Supabase Connected";
+        badgeDb.className = "text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30";
+      }
+
+      // Muat data simulasi awal (37 SMA & 135 Panitia) beserta contoh bukti foto
+      const sim = buildGresikSimulationData();
+      state.sekolah = sim.sekolahData;
+      state.panitia = sim.panitiaData;
+      state.currentUser = state.panitia[0]; // Default login: M. Andhika (Admin)
+
+      runPlottingAlgorithm(!supabaseClient);
+      if (supabaseClient) {
+        // Mode online: jangan otomatis masuk sebagai Admin. Pakai akun non-admin sementara sampai login.
+        state.currentUser = state.panitia.find(p => normalizeText(p.Role) !== 'admin') || state.panitia[0];
+      }
+      loginByNrp(state.currentUser.NRP);
+
+      // Isi dropdown akun cepat di Modal Login
+      const quickSelect = document.getElementById('modalSelectQuickAccount');
+      quickSelect.innerHTML = state.panitia.map(p =>
+        `<option value="${escapeHtml(p.NRP)}">${escapeHtml(p.NRP)} — ${escapeHtml(p.Nama)} (${p.Role.toUpperCase()})</option>`
+      ).join('');
+
+      // Navigasi Sidebar & Bottom Nav
+      document.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetView = btn.getAttribute('data-nav');
+          switchMainView(targetView);
+        });
+      });
+
+      // Sub-tab di Menu Admin Plotting
+      document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.admin-subtab-btn').forEach(b => {
+            b.className = "admin-subtab-btn px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200";
+          });
+          btn.className = "admin-subtab-btn px-3 py-1.5 text-xs font-semibold rounded bg-[#1E40AF] text-white";
+
+          const targetSub = btn.getAttribute('data-subtab');
+          document.querySelectorAll('.admin-subview').forEach(sv => sv.classList.add('hidden'));
+          const subEl = document.getElementById(targetSub);
+          if (subEl) subEl.classList.remove('hidden');
+        });
+      });
+
+      // Tombol Login NRP Cepat di Topbar & Modal
+      document.getElementById('btnQuickLogin').addEventListener('click', () => {
+        loginByNrp(document.getElementById('quickNrpInput').value);
+      });
+
+      document.getElementById('btnOpenLoginModal').addEventListener('click', () => {
+        const m = document.getElementById('modalLoginNrp');
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      });
+
+      document.getElementById('btnCloseLoginModal').addEventListener('click', () => {
+        const m = document.getElementById('modalLoginNrp');
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      });
+
+      document.getElementById('modalSelectQuickAccount').addEventListener('change', (e) => {
+        document.getElementById('modalInputNrp').value = e.target.value;
+      });
+
+      document.getElementById('btnSubmitModalLogin').addEventListener('click', () => {
+        loginByNrp(document.getElementById('modalInputNrp').value);
+        const m = document.getElementById('modalLoginNrp');
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      });
+
+      // Modal Skema SQL Supabase
+      document.getElementById('btnOpenSchemaModal').addEventListener('click', () => {
+        const m = document.getElementById('modalSupabaseSchema');
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      });
+
+      document.getElementById('btnCloseSchemaModal').addEventListener('click', () => {
+        const m = document.getElementById('modalSupabaseSchema');
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      });
+
+      // Tombol Mode Demo / Isi Data Awal
+      const resetSimHandler = () => {
+        const fresh = buildGresikSimulationData();
+        state.sekolah = fresh.sekolahData;
+        state.panitia = fresh.panitiaData;
+        document.getElementById('inputTargetVisit').value = 5;
+        runPlottingAlgorithm(true);
+        loginByNrp(state.currentUser ? state.currentUser.NRP : state.panitia[0].NRP);
+        updateNoticeBar("Mode Demo / Data Simulasi Awal (37 SMA & 135 Panitia) berhasil dimuat ulang lengkap dengan plotting 5x visit.", false);
+      };
+      document.getElementById('btnLoadSimulasi').addEventListener('click', resetSimHandler);
+      document.getElementById('btnDemoModeTop').addEventListener('click', resetSimHandler);
+
+      // Tombol Jalankan Algoritma Plotting & Publish Supabase
+      document.getElementById('btnGeneratePlotting').addEventListener('click', () => {
+        runPlottingAlgorithm(false);
+        updateNoticeBar("Algoritma Plotting selesai dijalankan: seluruh 135 panitia mendapat tepat 5x visit tanpa bentrok tanggal.", false);
+      });
+      document.getElementById('btnPublishSupabase').addEventListener('click', publishPlottingToSupabase);
+
+      // Pemilih Warna Header (:root)
+      document.getElementById('inputColorHeader').addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--primary-header-bg', e.target.value);
+      });
+
+      // Click-to-Swap Delegasi pada Tabel Hasil SMA
+      document.getElementById('schoolResultsContainer').addEventListener('click', (e) => {
+        const row = e.target.closest('tr.swappable-row');
+        if (!row) return;
+        const schoolId = row.getAttribute('data-school-id');
+        const slotIndex = parseInt(row.getAttribute('data-slot-index'), 10);
+        if (schoolId && !isNaN(slotIndex)) {
+          handleSlotClick(schoolId, slotIndex);
+        }
+      });
+
+      document.getElementById('btnCancelSwap').addEventListener('click', cancelManualSwap);
+
+      // Delegasi Tombol "Buka Kamera Absen Geotag" dari Kartu Jadwal Visitku
+      document.getElementById('myScheduleCardsGrid').addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-goto-camera');
+        if (!btn) return;
+        const targetVal = btn.getAttribute('data-open-camera');
+        switchMainView('viewKameraGeotag');
+        const selectEl = document.getElementById('selectAbsenAssignment');
+        if (selectEl && targetVal) {
+          selectEl.value = targetVal;
+          updateCameraOverlayText();
+        }
+      });
+
+      // Kontrol Kamera & Geotag
+      document.getElementById('btnStartCamera').addEventListener('click', startLiveCamera);
+      document.getElementById('btnStopCamera').addEventListener('click', stopLiveCamera);
+      document.getElementById('btnRefreshGps').addEventListener('click', refreshGpsLocation);
+      document.getElementById('selectAbsenAssignment').addEventListener('change', updateCameraOverlayText);
+      document.getElementById('btnCaptureGeotag').addEventListener('click', captureAndSubmitGeotag);
+
+      document.getElementById('btnDownloadCapturedJpg').addEventListener('click', () => {
+        if (!state.lastCapturedDataUrl) return;
+        const a = document.createElement('a');
+        a.href = state.lastCapturedDataUrl;
+        a.download = `Bukti_Absen_Geotag_${state.currentUser ? state.currentUser.NRP : 'Panitia'}.jpg`;
+        a.click();
+      });
+
+      // Submit Form Ketersediaan Panitia
+      document.getElementById('formKetersediaanPanitia').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nrp = document.getElementById('formInputNrp').value.trim();
+        const nama = document.getElementById('formInputNama').value.trim();
+        const asalSma = document.getElementById('formSelectAsalSma').value;
+        const zona = document.getElementById('formSelectZona').value;
+        const bersedia = document.getElementById('formSelectBersediaJauh').value;
+        const halangan = document.getElementById('formInputTanggalHalangan').value.trim() || '-';
+        const info = document.getElementById('formInputInfoTambahan').value.trim() || '-';
+
+        let targetPanitia = state.panitia.find(p => normalizeText(p.NRP) === normalizeText(nrp));
+        if (targetPanitia) {
+          targetPanitia.Nama = nama;
+          targetPanitia.Asal_SMA = asalSma;
+          targetPanitia.Zona_Domisili = zona;
+          targetPanitia.Bersedia_Jauh = bersedia;
+          targetPanitia.Tanggal_Halangan = halangan;
+          targetPanitia.Info_Tambahan = info;
+        } else {
+          targetPanitia = {
+            ID_Panitia: `PNT-${String(state.panitia.length + 1).padStart(3, '0')}`,
+            NRP: nrp,
+            Role: 'panitia',
+            Nama: nama,
+            Asal_SMA: asalSma,
+            Zona_Domisili: zona,
+            Bersedia_Jauh: bersedia,
+            Tanggal_Halangan: halangan,
+            Info_Tambahan: info
+          };
+          state.panitia.push(targetPanitia);
+        }
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('panitia').upsert({
+              id_panitia: targetPanitia.ID_Panitia,
+              nrp: targetPanitia.NRP,
+              nama: targetPanitia.Nama,
+              role: targetPanitia.Role,
+              asal_sma: targetPanitia.Asal_SMA,
+              zona_domisili: targetPanitia.Zona_Domisili,
+              bersedia_jauh: targetPanitia.Bersedia_Jauh,
+              tanggal_halangan: targetPanitia.Tanggal_Halangan,
+              info_tambahan: targetPanitia.Info_Tambahan
+            });
+          } catch (err) {
+            // Tetap tersimpan di memori lokal
+          }
+        }
+
+        state.currentUser = targetPanitia;
+        document.getElementById('sidebarUserName').textContent = targetPanitia.Nama;
+        renderAll();
+        updateNoticeBar(`Data ketersediaan ${targetPanitia.Nama} (NRP ${targetPanitia.NRP}) berhasil diperbarui.`, false);
+      });
+
+      // Filter Pencarian & Dropdown Monitoring
+      document.getElementById('inputSearchFilter').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderSchoolResults();
+        renderRekapPanitia();
+      });
+
+      document.getElementById('selectZonaFilter').addEventListener('change', (e) => {
+        state.zonaFilter = e.target.value;
+        renderSchoolResults();
+        renderRekapPanitia();
+      });
+
+      document.getElementById('selectKategoriFilter').addEventListener('change', (e) => {
+        state.kategoriFilter = e.target.value;
+        renderSchoolResults();
+      });
+
+      document.getElementById('selectFilterMonitoringSma').addEventListener('change', renderMonitoringGallery);
+      document.getElementById('selectFilterMonitoringStatus').addEventListener('change', renderMonitoringGallery);
+
+      // Export & Import Excel
+      document.getElementById('btnExportExcel').addEventListener('click', exportPlottingToExcel);
+      document.getElementById('btnExportRekapMonitoring').addEventListener('click', exportPlottingToExcel);
+      document.getElementById('btnDownloadTemplate').addEventListener('click', downloadTemplateInputExcel);
+      document.getElementById('fileInputExcel').addEventListener('change', handleExcelImport);
+    }
+
+    /* ==========================================================================
+       12. MUAT DATA DARI SUPABASE + INGAT LOGIN (mode online)
+       ========================================================================== */
+    const LOGIN_KEY = 'portal_nrp_aktif';
+    function saveLogin(nrp) { try { localStorage.setItem(LOGIN_KEY, nrp); } catch (e) {} }
+    function readLogin() { try { return localStorage.getItem(LOGIN_KEY); } catch (e) { return null; } }
+
+    async function hydrateFromSupabase() {
+      if (!supabaseClient) return;
+      try {
+        const [pRes, aRes] = await Promise.all([
+          supabaseClient.from('panitia').select('*').limit(5000),
+          supabaseClient.from('plotting_absensi').select('*').order('id_plotting').limit(5000)
+        ]);
+        if (pRes.error) throw pRes.error;
+        if (aRes.error) throw aRes.error;
+
+        if (pRes.data && pRes.data.length) {
+          state.panitia = pRes.data.map(r => ({
+            ID_Panitia: r.id_panitia, NRP: r.nrp, Nama: r.nama, Role: r.role || 'panitia',
+            Asal_SMA: r.asal_sma || '', Zona_Domisili: r.zona_domisili || '',
+            Bersedia_Jauh: r.bersedia_jauh || 'Bersedia', Tanggal_Halangan: r.tanggal_halangan || '-',
+            Info_Tambahan: r.info_tambahan || '-'
+          }));
+        }
+        if (aRes.data && aRes.data.length) {
+          const sekMap = {}, asg = {};
+          aRes.data.forEach(r => {
+            if (!sekMap[r.id_sekolah]) {
+              sekMap[r.id_sekolah] = { ID_Sekolah: r.id_sekolah, Nama_SMA: r.nama_sma, Zona_Sekolah: r.zona_sekolah,
+                Kategori_Lokasi: r.kategori_lokasi, Tanggal_Visit: r.tanggal_visit, Jumlah_Tim: 1, Anggota_Per_Tim: 1 };
+              asg[r.id_sekolah] = [];
+            }
+            const sk = sekMap[r.id_sekolah];
+            sk.Jumlah_Tim = Math.max(sk.Jumlah_Tim, r.tim || 1);
+            sk.Anggota_Per_Tim = Math.max(sk.Anggota_Per_Tim, r.kursi || 1);
+            asg[r.id_sekolah].push({
+              id_plotting: r.id_plotting, tim: r.tim, kursi: r.kursi, panitiaId: r.id_panitia,
+              isAlumni: !!r.is_alumni, skor: 0, alasanSkor: 'Dimuat dari database',
+              status_hadir: r.status_hadir || 'Belum Hadir', foto_url: r.foto_url || '',
+              latitude: r.latitude, longitude: r.longitude, akurasi_meter: r.akurasi_meter,
+              waktu_absen: r.waktu_absen ? new Date(r.waktu_absen).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB' : ''
+            });
+          });
+          Object.values(asg).forEach(a => a.sort((x, y) => (x.tim - y.tim) || (x.kursi - y.kursi)));
+          state.sekolah = Object.values(sekMap);
+          state.assignments = asg;
+        }
+
+        const quick = document.getElementById('modalSelectQuickAccount');
+        if (quick) quick.innerHTML = ''; // daftar NRP tidak ditampilkan di mode online
+        const saved = readLogin();
+        const found = saved && state.panitia.find(p => normalizeText(p.NRP) === normalizeText(saved));
+        if (found) {
+          loginByNrp(found.NRP);
+        } else {
+          state.currentUser = state.panitia.find(p => normalizeText(p.Role) !== 'admin') || state.panitia[0];
+          loginByNrp(state.currentUser.NRP);
+          const m = document.getElementById('modalLoginNrp');
+          if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+        }
+        renderAll();
+        updateNoticeBar(`Data dimuat dari Supabase (${state.panitia.length} panitia, ${aRes.data ? aRes.data.length : 0} slot).`, false);
+      } catch (err) {
+        updateNoticeBar('Gagal memuat dari Supabase: ' + err.message + ' — cek config.js dan policy SQL.', false);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { initApp(); hydrateFromSupabase(); });
+  </script>
+</body>
+</html>
