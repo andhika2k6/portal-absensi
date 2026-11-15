@@ -211,8 +211,8 @@
 
         <div class="flex flex-wrap items-center gap-2">
           <!-- Quick Switcher NRP di Topbar -->
-          <div class="flex items-center bg-slate-100 border border-[#CBD5E1] rounded px-2 py-1 text-xs">
-            <span class="text-slate-500 mr-1.5 font-medium">Login NRP:</span>
+          <div id="quickNrpLoginGroup" class="flex items-center bg-slate-100 border border-[#CBD5E1] rounded px-2 py-1 text-xs">
+            <span class="text-slate-500 mr-1.5 font-medium">Demo NRP:</span>
             <input type="text" id="quickNrpInput" value="5031251025" placeholder="Ketik NRP..." class="w-28 bg-transparent font-mono-num font-semibold text-slate-900 focus:outline-none">
             <button type="button" id="btnQuickLogin" class="ml-1 px-2 py-0.5 bg-[#1E40AF] text-white rounded text-[11px] font-semibold hover:bg-[#1E3A8A]">Masuk</button>
           </div>
@@ -687,26 +687,55 @@
   <!-- ========================================================================
        MODAL 1: PILIH / GANTI NRP LOGIN (ADMIN vs PANITIA)
        ======================================================================== -->
-  <div id="modalLoginNrp" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-4">
-    <div class="bg-white border border-[#E2E8F0] rounded-md max-w-md w-full p-5 space-y-4">
+  <div id="modalLoginNrp" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[80] hidden items-center justify-center p-4">
+    <div class="bg-white border border-[#E2E8F0] shadow-2xl rounded-xl max-w-md w-full p-5 sm:p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-        <h3 class="text-sm font-bold text-slate-900">Sistem Login NRP Panitia</h3>
+        <div>
+          <p class="text-[10px] font-bold tracking-[0.18em] text-blue-700 uppercase">Portal Visit KPK</p>
+          <h3 class="text-base font-bold text-slate-900 mt-1">Masuk ke akun panitia</h3>
+        </div>
         <button type="button" id="btnCloseLoginModal" class="text-slate-400 hover:text-slate-600 text-xs font-bold">TUTUP</button>
       </div>
-      <div class="space-y-3 text-xs">
-        <p class="text-slate-600">Masukkan NRP Anda untuk masuk. Jika NRP terdaftar sebagai <code class="font-mono-num font-bold">admin</code> di tabel <code class="font-mono-num">panitia</code>, Menu Admin + Menu Panitia akan terbuka.</p>
+      <div class="space-y-3 text-sm">
+        <p class="text-slate-600">Gunakan NRP dan password yang diberikan oleh Panitia Visit. Hak akses Admin atau Panitia ditentukan oleh database.</p>
         <div>
-          <label for="modalInputNrp" class="block font-semibold text-slate-700 mb-1">Masukkan NRP</label>
-          <input type="text" id="modalInputNrp" value="5031251025" class="w-full h-9 px-3 border border-[#CBD5E1] rounded font-mono-num text-xs">
+          <label for="modalInputNrp" class="block font-semibold text-slate-700 mb-1">NRP</label>
+          <input type="text" id="modalInputNrp" inputmode="numeric" autocomplete="username" placeholder="Masukkan NRP" class="w-full h-10 px-3 border border-[#CBD5E1] rounded-lg font-mono-num text-sm">
+        </div>
+        <div id="modalQuickAccountGroup">
+          <label for="modalSelectQuickAccount" class="block font-semibold text-slate-700 mb-1">Akun cepat (mode demo)</label>
+          <select id="modalSelectQuickAccount" class="w-full h-10 px-2.5 border border-[#CBD5E1] rounded-lg bg-white text-sm"></select>
         </div>
         <div>
-          <label for="modalSelectQuickAccount" class="block font-semibold text-slate-700 mb-1">Atau Pilih Akun Cepat (Simulasi 135 Panitia)</label>
-          <select id="modalSelectQuickAccount" class="w-full h-9 px-2.5 border border-[#CBD5E1] rounded bg-white text-xs"></select>
+          <label for="modalInputPassword" class="block font-semibold text-slate-700 mb-1">Password</label>
+          <input type="password" id="modalInputPassword" autocomplete="current-password" placeholder="Masukkan password" class="w-full h-10 px-3 border border-[#CBD5E1] rounded-lg text-sm">
         </div>
+        <p id="loginErrorMessage" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2"></p>
       </div>
       <div class="flex justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
-        <button type="button" id="btnSubmitModalLogin" class="h-9 px-4 rounded bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-xs font-semibold">Masuk dengan NRP Ini</button>
+        <button type="button" id="btnSubmitModalLogin" class="w-full h-10 px-4 rounded-lg bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-semibold">Masuk</button>
       </div>
+      <p class="text-[10px] leading-relaxed text-slate-400">Jangan bagikan password kepada orang lain. Hubungi admin jika belum menerima akun.</p>
+    </div>
+  </div>
+
+  <div id="modalFirstPassword" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[90] hidden items-center justify-center p-4">
+    <div class="bg-white border border-[#E2E8F0] shadow-2xl rounded-xl max-w-md w-full p-5 sm:p-6 space-y-4">
+      <div class="border-b border-[#E2E8F0] pb-3">
+        <p class="text-[10px] font-bold tracking-[0.18em] text-amber-700 uppercase">Keamanan Akun</p>
+        <h3 class="text-base font-bold text-slate-900 mt-1">Buat password pribadi</h3>
+      </div>
+      <p class="text-sm text-slate-600">Password sementara wajib diganti sebelum data aplikasi dapat dibuka.</p>
+      <div>
+        <label for="firstPasswordInput" class="block text-sm font-semibold text-slate-700 mb-1">Password baru</label>
+        <input type="password" id="firstPasswordInput" autocomplete="new-password" minlength="10" class="w-full h-10 px-3 border border-[#CBD5E1] rounded-lg text-sm" placeholder="Minimal 10 karakter">
+      </div>
+      <div>
+        <label for="firstPasswordConfirm" class="block text-sm font-semibold text-slate-700 mb-1">Ulangi password baru</label>
+        <input type="password" id="firstPasswordConfirm" autocomplete="new-password" minlength="10" class="w-full h-10 px-3 border border-[#CBD5E1] rounded-lg text-sm" placeholder="Ketik ulang password">
+      </div>
+      <p id="firstPasswordError" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2"></p>
+      <button type="button" id="btnSubmitFirstPassword" class="w-full h-10 rounded-lg bg-[#1E40AF] hover:bg-[#1E3A8A] text-white text-sm font-semibold">Simpan password dan lanjutkan</button>
     </div>
   </div>
 
@@ -801,6 +830,8 @@ create table if not exists public.plotting_absensi (
       kategoriFilter: 'ALL',
       // Kamera & Geotag State
       cameraStream: null,
+      authSession: null,
+      teamRoster: {},
       gpsCoords: {
         lat: -7.156650,
         lng: 112.655500,
@@ -1277,25 +1308,37 @@ create table if not exists public.plotting_absensi (
     /* ==========================================================================
        5. SISTEM LOGIN NRP & NAVIGASI ROLE (ADMIN vs PANITIA)
        ========================================================================== */
-    function loginByNrp(nrpInput) {
-      const cleaned = String(nrpInput || '').trim();
-      if (!cleaned) return;
+    function openLoginModal() {
+      const modal = document.getElementById('modalLoginNrp');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      const closeBtn = document.getElementById('btnCloseLoginModal');
+      if (closeBtn) closeBtn.classList.toggle('hidden', !!supabaseClient && !state.currentUser);
+      setTimeout(() => document.getElementById('modalInputNrp')?.focus(), 30);
+    }
 
-      const found = state.panitia.find(p =>
-        normalizeText(p.NRP) === normalizeText(cleaned) ||
-        normalizeText(p.ID_Panitia) === normalizeText(cleaned)
-      );
+    function closeLoginModal() {
+      if (supabaseClient && !state.currentUser) return;
+      const modal = document.getElementById('modalLoginNrp');
+      if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    }
 
-      if (!found) {
-        updateNoticeBar(`NRP "${cleaned}" tidak ditemukan di tabel panitia. Pastikan NRP sudah terdaftar sebagai panitia.`, false);
-        return;
-      }
+    function setAuthError(message) {
+      const el = document.getElementById('loginErrorMessage');
+      if (!el) return;
+      el.textContent = message || '';
+      el.classList.toggle('hidden', !message);
+    }
 
+    function applySignedInPanitia(found) {
+      if (!found) return;
       state.currentUser = found;
-      saveLogin(found.NRP);
-      document.getElementById('quickNrpInput').value = found.NRP;
+      if (!supabaseClient) saveLogin(found.NRP);
+      const quickInput = document.getElementById('quickNrpInput');
+      if (quickInput) quickInput.value = found.NRP;
       document.getElementById('sidebarUserName').textContent = found.Nama;
-      document.getElementById('sidebarUserNrp').textContent = `NRP: ${found.NRP}`;
+      document.getElementById('sidebarUserNrp').textContent = 'NRP: ' + found.NRP;
 
       const isAdmin = normalizeText(found.Role) === 'admin';
       const roleBadge = document.getElementById('sidebarUserRole');
@@ -1304,28 +1347,145 @@ create table if not exists public.plotting_absensi (
         ? 'text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200'
         : 'text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200';
 
-      // Tampilkan atau sembunyikan menu Admin sesuai Role
       const adminGroup = document.getElementById('sidebarAdminGroup');
       const mobileAdmin1 = document.getElementById('mobileNavAdminPlotting');
       const mobileAdmin2 = document.getElementById('mobileNavMonitoring');
-
-      if (isAdmin) {
-        adminGroup.classList.remove('hidden');
-        mobileAdmin1.classList.remove('hidden');
-        mobileAdmin2.classList.remove('hidden');
+      if (adminGroup) adminGroup.classList.toggle('hidden', !isAdmin);
+      if (mobileAdmin1) mobileAdmin1.classList.toggle('hidden', !isAdmin);
+      if (mobileAdmin2) mobileAdmin2.classList.toggle('hidden', !isAdmin);
+      const logoutButton = document.getElementById('btnOpenLoginModal');
+      if (logoutButton) logoutButton.innerHTML = '<i data-lucide="log-out" class="w-3.5 h-3.5"></i> Keluar';
+      if (!isAdmin && (state.activeView === 'viewAdminPlotting' || state.activeView === 'viewMonitoringFoto')) {
+        state.activeView = 'viewJadwalVisitku';
       } else {
-        adminGroup.classList.add('hidden');
-        mobileAdmin1.classList.add('hidden');
-        mobileAdmin2.classList.add('hidden');
-        if (state.activeView === 'viewAdminPlotting' || state.activeView === 'viewMonitoringFoto') {
-          switchMainView('viewJadwalVisitku');
-        }
+        state.activeView = isAdmin ? 'viewAdminPlotting' : 'viewJadwalVisitku';
       }
-
+      switchMainView(state.activeView);
       populateFormKetersediaan();
       renderMyScheduleView();
       populateCameraAssignmentDropdown();
-      updateNoticeBar(`Login berhasil: ${found.Nama} (NRP ${found.NRP}) — Hak akses: ${found.Role.toUpperCase()}.`, false);
+      if (window.lucide) window.lucide.createIcons();
+      closeLoginModal();
+    }
+
+    async function loginWithNrpPassword(nrpInput, passwordInput) {
+      const nrp = String(nrpInput || '').trim();
+      const password = String(passwordInput || '');
+      setAuthError('');
+      if (!/^\d{6,15}$/.test(nrp)) {
+        setAuthError('NRP harus berupa 6–15 digit angka.');
+        return;
+      }
+      if (!password) {
+        setAuthError('Password wajib diisi.');
+        return;
+      }
+      if (!supabaseClient) {
+        loginByNrp(nrp);
+        return;
+      }
+      const button = document.getElementById('btnSubmitModalLogin');
+      if (button) { button.disabled = true; button.textContent = 'Memeriksa akun...'; }
+      try {
+        const email = 'pnt-' + nrp + '@portalvisit.invalid';
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        if (!data?.session) throw new Error('Sesi login tidak berhasil dibuat.');
+        state.authSession = data.session;
+        await hydrateFromSupabase();
+      } catch (error) {
+        setAuthError('Login gagal. Periksa NRP dan password, lalu coba lagi.');
+      } finally {
+        if (button) { button.disabled = false; button.textContent = 'Masuk'; }
+      }
+    }
+
+    async function changeInitialPassword() {
+      const first = document.getElementById('firstPasswordInput')?.value || '';
+      const confirm = document.getElementById('firstPasswordConfirm')?.value || '';
+      const errorEl = document.getElementById('firstPasswordError');
+      const showError = (message) => {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+      };
+      errorEl.classList.add('hidden');
+      if (first.length < 10 || !/[a-z]/.test(first) || !/[A-Z]/.test(first) || !/\d/.test(first)) {
+        showError('Gunakan minimal 10 karakter, dengan huruf kecil, huruf besar, dan angka.');
+        return;
+      }
+      if (first !== confirm) {
+        showError('Konfirmasi password belum sama.');
+        return;
+      }
+      const button = document.getElementById('btnSubmitFirstPassword');
+      button.disabled = true;
+      button.textContent = 'Menyimpan...';
+      try {
+        const { error } = await supabaseClient.auth.updateUser({ password: first });
+        if (error) throw error;
+        const { data: profile, error: profileError } = await supabaseClient
+          .from('panitia')
+          .select('must_change_password')
+          .eq('auth_user_id', state.authSession.user.id)
+          .single();
+        if (profileError) throw profileError;
+        if (profile.must_change_password) {
+          throw new Error('Database belum mengonfirmasi perubahan password. Hubungi administrator.');
+        }
+        document.getElementById('modalFirstPassword').classList.add('hidden');
+        document.getElementById('modalFirstPassword').classList.remove('flex');
+        document.getElementById('firstPasswordInput').value = '';
+        document.getElementById('firstPasswordConfirm').value = '';
+        await hydrateFromSupabase();
+      } catch (error) {
+        showError(error.message || 'Password belum berhasil diperbarui.');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Simpan password dan lanjutkan';
+      }
+    }
+
+    async function signOutPortal() {
+      stopLiveCamera();
+      if (supabaseClient) {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) updateNoticeBar('Gagal keluar: ' + error.message, false);
+      }
+      state.authSession = null;
+      state.currentUser = null;
+      state.panitia = [];
+      state.sekolah = [];
+      state.assignments = {};
+      state.teamRoster = {};
+      if (!supabaseClient) {
+        location.reload();
+        return;
+      }
+      const firstModal = document.getElementById('modalFirstPassword');
+      firstModal.classList.add('hidden');
+      firstModal.classList.remove('flex');
+      openLoginModal();
+      updateNoticeBar('Anda telah keluar dari Portal Visit.', false);
+    }
+
+    function loginByNrp(nrpInput) {
+      if (supabaseClient) {
+        openLoginModal();
+        updateNoticeBar('Silakan masuk menggunakan NRP dan password.', false);
+        return;
+      }
+      const cleaned = String(nrpInput || '').trim();
+      if (!cleaned) return;
+      const found = state.panitia.find(p =>
+        normalizeText(p.NRP) === normalizeText(cleaned) ||
+        normalizeText(p.ID_Panitia) === normalizeText(cleaned)
+      );
+      if (!found) {
+        updateNoticeBar('NRP tidak ditemukan pada data simulasi.', false);
+        return;
+      }
+      applySignedInPanitia(found);
+      updateNoticeBar('Mode demo: masuk sebagai ' + found.Nama + ' (' + found.Role.toUpperCase() + ').', false);
     }
 
     function switchMainView(viewId) {
@@ -2156,11 +2316,11 @@ create table if not exists public.plotting_absensi (
           const mySlot = slots[mySlotIndex];
           const rekanSatuTim = slots
             .filter(sl => sl.tim === mySlot.tim)
-            .map(sl => panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId);
+            .map(sl => state.teamRoster[sl.id_plotting]?.nama || panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId);
           const semuaRekanSma = slots.map(sl => ({
             tim: sl.tim,
-            nama: panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId,
-            info: panitiaMap[sl.panitiaId]?.Info_Tambahan || '-'
+            nama: state.teamRoster[sl.id_plotting]?.nama || panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId,
+            info: state.teamRoster[sl.id_plotting]?.fakultas || panitiaMap[sl.panitiaId]?.Info_Tambahan || '-'
           }));
           myAssignments.push({
             sekolah: s,
@@ -2467,24 +2627,30 @@ create table if not exists public.plotting_absensi (
         badgeDb.className = "text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30";
       }
 
-      // Muat data simulasi awal (37 SMA & 135 Panitia) beserta contoh bukti foto
+      // Data simulasi hanya dipakai ketika konfigurasi Supabase kosong.
       const sim = buildGresikSimulationData();
       state.sekolah = sim.sekolahData;
       state.panitia = sim.panitiaData;
-      state.currentUser = state.panitia[0]; // Default login: M. Andhika (Admin)
-
       runPlottingAlgorithm(!supabaseClient);
-      if (supabaseClient) {
-        // Mode online: jangan otomatis masuk sebagai Admin. Pakai akun non-admin sementara sampai login.
-        state.currentUser = state.panitia.find(p => normalizeText(p.Role) !== 'admin') || state.panitia[0];
-      }
-      loginByNrp(state.currentUser.NRP);
 
-      // Isi dropdown akun cepat di Modal Login
       const quickSelect = document.getElementById('modalSelectQuickAccount');
       quickSelect.innerHTML = state.panitia.map(p =>
         `<option value="${escapeHtml(p.NRP)}">${escapeHtml(p.NRP)} — ${escapeHtml(p.Nama)} (${p.Role.toUpperCase()})</option>`
       ).join('');
+
+      if (supabaseClient) {
+        state.currentUser = null;
+        document.getElementById('quickNrpLoginGroup')?.classList.add('hidden');
+        document.getElementById('btnDemoModeTop')?.classList.add('hidden');
+        document.getElementById('btnLoadSimulasi')?.classList.add('hidden');
+        document.getElementById('modalQuickAccountGroup')?.classList.add('hidden');
+        const closeBtn = document.getElementById('btnCloseLoginModal');
+        if (closeBtn) closeBtn.classList.add('hidden');
+        openLoginModal();
+      } else {
+        state.currentUser = state.panitia[0];
+        loginByNrp(state.currentUser.NRP);
+      }
 
       // Navigasi Sidebar & Bottom Nav
       document.querySelectorAll('[data-nav]').forEach(btn => {
@@ -2509,33 +2675,34 @@ create table if not exists public.plotting_absensi (
         });
       });
 
-      // Tombol Login NRP Cepat di Topbar & Modal
+      // Login demo atau NRP+password Supabase.
       document.getElementById('btnQuickLogin').addEventListener('click', () => {
-        loginByNrp(document.getElementById('quickNrpInput').value);
+        document.getElementById('modalInputNrp').value = document.getElementById('quickNrpInput').value;
+        openLoginModal();
       });
 
       document.getElementById('btnOpenLoginModal').addEventListener('click', () => {
-        const m = document.getElementById('modalLoginNrp');
-        m.classList.remove('hidden');
-        m.classList.add('flex');
+        if (supabaseClient && state.currentUser) signOutPortal();
+        else openLoginModal();
       });
 
-      document.getElementById('btnCloseLoginModal').addEventListener('click', () => {
-        const m = document.getElementById('modalLoginNrp');
-        m.classList.add('hidden');
-        m.classList.remove('flex');
-      });
-
+      document.getElementById('btnCloseLoginModal').addEventListener('click', closeLoginModal);
       document.getElementById('modalSelectQuickAccount').addEventListener('change', (e) => {
         document.getElementById('modalInputNrp').value = e.target.value;
       });
-
       document.getElementById('btnSubmitModalLogin').addEventListener('click', () => {
-        loginByNrp(document.getElementById('modalInputNrp').value);
-        const m = document.getElementById('modalLoginNrp');
-        m.classList.add('hidden');
-        m.classList.remove('flex');
+        loginWithNrpPassword(
+          document.getElementById('modalInputNrp').value,
+          document.getElementById('modalInputPassword').value
+        );
       });
+      document.getElementById('modalInputPassword').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') loginWithNrpPassword(
+          document.getElementById('modalInputNrp').value,
+          document.getElementById('modalInputPassword').value
+        );
+      });
+      document.getElementById('btnSubmitFirstPassword').addEventListener('click', changeInitialPassword);
 
       // Modal Skema SQL Supabase
       document.getElementById('btnOpenSchemaModal').addEventListener('click', () => {
@@ -2709,64 +2876,133 @@ create table if not exists public.plotting_absensi (
     function saveLogin(nrp) { try { localStorage.setItem(LOGIN_KEY, nrp); } catch (e) {} }
     function readLogin() { try { return localStorage.getItem(LOGIN_KEY); } catch (e) { return null; } }
 
+    function mapPanitiaRecord(r) {
+      return {
+        ID_Panitia: r.id_panitia, NRP: r.nrp, Nama: r.nama, Role: r.role || 'panitia',
+        Asal_SMA: r.asal_sma || '', Zona_Domisili: r.zona_domisili || '',
+        Bersedia_Jauh: r.bersedia_jauh || 'Bersedia', Tanggal_Halangan: r.tanggal_halangan || '-',
+        Info_Tambahan: r.info_tambahan || '-', Fakultas: r.fakultas || '',
+        Status_Kendaraan: r.status_kendaraan || '', Must_Change_Password: !!r.must_change_password
+      };
+    }
+
     async function hydrateFromSupabase() {
       if (!supabaseClient) return;
       try {
-        const [pRes, aRes] = await Promise.all([
-          supabaseClient.from('panitia').select('*').limit(5000),
-          supabaseClient.from('plotting_absensi').select('*').order('id_plotting').limit(5000)
-        ]);
-        if (pRes.error) throw pRes.error;
-        if (aRes.error) throw aRes.error;
-
-        if (pRes.data && pRes.data.length) {
-          state.panitia = pRes.data.map(r => ({
-            ID_Panitia: r.id_panitia, NRP: r.nrp, Nama: r.nama, Role: r.role || 'panitia',
-            Asal_SMA: r.asal_sma || '', Zona_Domisili: r.zona_domisili || '',
-            Bersedia_Jauh: r.bersedia_jauh || 'Bersedia', Tanggal_Halangan: r.tanggal_halangan || '-',
-            Info_Tambahan: r.info_tambahan || '-'
-          }));
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+        const session = sessionData?.session;
+        if (!session) {
+          state.authSession = null;
+          state.currentUser = null;
+          openLoginModal();
+          return;
         }
-        if (aRes.data && aRes.data.length) {
-          const sekMap = {}, asg = {};
-          aRes.data.forEach(r => {
-            if (!sekMap[r.id_sekolah]) {
-              sekMap[r.id_sekolah] = { ID_Sekolah: r.id_sekolah, Nama_SMA: r.nama_sma, Zona_Sekolah: r.zona_sekolah,
-                Kategori_Lokasi: r.kategori_lokasi, Tanggal_Visit: r.tanggal_visit, Jumlah_Tim: 1, Anggota_Per_Tim: 1 };
-              asg[r.id_sekolah] = [];
-            }
-            const sk = sekMap[r.id_sekolah];
-            sk.Jumlah_Tim = Math.max(sk.Jumlah_Tim, r.tim || 1);
-            sk.Anggota_Per_Tim = Math.max(sk.Anggota_Per_Tim, r.kursi || 1);
-            asg[r.id_sekolah].push({
-              id_plotting: r.id_plotting, tim: r.tim, kursi: r.kursi, panitiaId: r.id_panitia,
-              isAlumni: !!r.is_alumni, skor: 0, alasanSkor: 'Dimuat dari database',
-              status_hadir: r.status_hadir || 'Belum Hadir', foto_url: r.foto_url || '',
-              latitude: r.latitude, longitude: r.longitude, akurasi_meter: r.akurasi_meter,
-              waktu_absen: r.waktu_absen ? new Date(r.waktu_absen).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB' : ''
+        state.authSession = session;
+
+        const { data: ownRecord, error: ownError } = await supabaseClient
+          .from('panitia').select('*').eq('auth_user_id', session.user.id).single();
+        if (ownError || !ownRecord) {
+          await supabaseClient.auth.signOut();
+          state.authSession = null;
+          state.currentUser = null;
+          setAuthError('Akun Auth belum terhubung ke data panitia. Hubungi administrator.');
+          openLoginModal();
+          return;
+        }
+
+        if (ownRecord.must_change_password) {
+          state.currentUser = null;
+          const loginModal = document.getElementById('modalLoginNrp');
+          loginModal.classList.add('hidden');
+          loginModal.classList.remove('flex');
+          const firstModal = document.getElementById('modalFirstPassword');
+          firstModal.classList.remove('hidden');
+          firstModal.classList.add('flex');
+          document.getElementById('firstPasswordInput').focus();
+          return;
+        }
+
+        const ownUser = mapPanitiaRecord(ownRecord);
+        const isAdmin = normalizeText(ownUser.Role) === 'admin';
+        const [panitiaRes, plotRes, schoolRes] = await Promise.all([
+          supabaseClient.from('panitia').select('*').order('nama').limit(5000),
+          supabaseClient.from('plotting_absensi').select('*').order('tanggal_visit').limit(5000),
+          supabaseClient.from('sekolah').select('*').order('nama_sma').limit(5000)
+        ]);
+        if (panitiaRes.error) throw panitiaRes.error;
+        if (plotRes.error) throw plotRes.error;
+        if (schoolRes.error) throw schoolRes.error;
+
+        state.panitia = (panitiaRes.data || []).map(mapPanitiaRecord);
+        state.currentUser = state.panitia.find(p => p.ID_Panitia === ownUser.ID_Panitia) || ownUser;
+        state.sekolah = (schoolRes.data || []).map(r => ({
+          ID_Sekolah: r.id_sekolah,
+          Nama_SMA: r.nama_sma,
+          Zona_Sekolah: r.zona_sekolah,
+          Kategori_Lokasi: r.kategori_lokasi,
+          Latitude: r.latitude,
+          Longitude: r.longitude,
+          Radius_Meter: r.radius_meter,
+          Tanggal_Visit: ''
+        }));
+
+        const schoolMap = Object.fromEntries(state.sekolah.map(x => [x.ID_Sekolah, x]));
+        const assignments = {};
+        const schedules = new Set();
+        for (const r of (plotRes.data || [])) {
+          if (!assignments[r.id_sekolah]) assignments[r.id_sekolah] = [];
+          const school = schoolMap[r.id_sekolah];
+          if (school && !school.Tanggal_Visit) school.Tanggal_Visit = r.tanggal_visit || '';
+          let photoUrl = '';
+          if (r.foto_path) {
+            const { data: signed, error: signedError } = await supabaseClient
+              .storage.from(STORAGE_BUCKET_NAME).createSignedUrl(r.foto_path, 3600);
+            if (!signedError && signed?.signedUrl) photoUrl = signed.signedUrl;
+          } else if (!isSupabaseConfigured) {
+            photoUrl = r.foto_url || '';
+          }
+          assignments[r.id_sekolah].push({
+            id_plotting: r.id_plotting, id_jadwal: r.id_jadwal || null,
+            tim: r.tim, kursi: r.kursi, panitiaId: r.id_panitia,
+            isAlumni: !!r.is_alumni, skor: 0, alasanSkor: 'Dimuat dari database',
+            status_hadir: r.status_hadir || 'Belum Hadir', foto_url: photoUrl,
+            foto_path: r.foto_path || null, status_geotag: r.status_geotag || 'Belum Absen',
+            latitude: r.latitude, longitude: r.longitude, akurasi_meter: r.akurasi_meter,
+            waktu_absen: r.waktu_absen ? new Date(r.waktu_absen).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB' : ''
+          });
+          if (r.id_jadwal) schedules.add(r.id_jadwal);
+        }
+        Object.values(assignments).forEach(a => a.sort((x, y) => (x.tim - y.tim) || (x.kursi - y.kursi)));
+        state.assignments = assignments;
+        state.teamRoster = {};
+
+        if (!isAdmin && schedules.size) {
+          const scheduleIds = Array.from(schedules);
+          const rosterResults = await Promise.all(scheduleIds.map(id =>
+            supabaseClient.rpc('get_rekan_setim', { p_id_jadwal: id })
+          ));
+          rosterResults.forEach(result => {
+            if (result.error) throw result.error;
+            (result.data || []).forEach(member => {
+              state.teamRoster[member.id_plotting] = member;
             });
           });
-          Object.values(asg).forEach(a => a.sort((x, y) => (x.tim - y.tim) || (x.kursi - y.kursi)));
-          state.sekolah = Object.values(sekMap);
-          state.assignments = asg;
         }
 
-        const quick = document.getElementById('modalSelectQuickAccount');
-        if (quick) quick.innerHTML = ''; // daftar NRP tidak ditampilkan di mode online
-        const saved = readLogin();
-        const found = saved && state.panitia.find(p => normalizeText(p.NRP) === normalizeText(saved));
-        if (found) {
-          loginByNrp(found.NRP);
-        } else {
-          state.currentUser = state.panitia.find(p => normalizeText(p.Role) !== 'admin') || state.panitia[0];
-          loginByNrp(state.currentUser.NRP);
-          const m = document.getElementById('modalLoginNrp');
-          if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-        }
+        applySignedInPanitia(state.currentUser);
         renderAll();
-        updateNoticeBar(`Data dimuat dari Supabase (${state.panitia.length} panitia, ${aRes.data ? aRes.data.length : 0} slot).`, false);
+        populateCameraAssignmentDropdown();
+        renderMyScheduleView();
+        const modal = document.getElementById('modalFirstPassword');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        updateNoticeBar(
+          'Login berhasil sebagai ' + state.currentUser.Nama + ' — Hak akses: ' + state.currentUser.Role.toUpperCase() + '.',
+          false
+        );
       } catch (err) {
-        updateNoticeBar('Gagal memuat dari Supabase: ' + err.message + ' — cek config.js dan policy SQL.', false);
+        updateNoticeBar('Gagal memuat data akun: ' + err.message, false);
       }
     }
 
