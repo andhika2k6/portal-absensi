@@ -1,8 +1,8 @@
-// ISI 2 BARIS INI dengan data dari Supabase (Project Settings > API).
-// Anon key memang boleh publik — keamanannya diatur lewat policy di supabase-setup.sql.
-// Biarkan apa adanya = aplikasi jalan di MODE DEMO (data simulasi, tidak tersimpan).
+// Preview sengaja dibuat terisolasi dari database production.
+// Isi SUPABASE_URL dan SUPABASE_ANON_KEY dengan kredensial PROJECT STAGING
+// setelah branch Supabase staging tersedia. Jangan pernah memasukkan service_role key.
 window.APP_CONFIG = {
-  SUPABASE_URL: "https://oyeguklskceamcqyxrgo.supabase.co",
-  SUPABASE_ANON_KEY: "sb_publishable_XHlXgAqeaL22aDXDRDsf7A_tiZIB4GQ",
+  SUPABASE_URL: "",
+  SUPABASE_ANON_KEY: "",
   STORAGE_BUCKET_NAME: "foto-absensi"
 };
