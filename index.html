@@ -833,9 +833,9 @@ create table if not exists public.plotting_absensi (
       authSession: null,
       teamRoster: {},
       gpsCoords: {
-        lat: -7.156650,
-        lng: 112.655500,
-        acc: 12,
+        lat: 0,
+        lng: 0,
+        acc: 0,
         isLive: false
       },
       lastCapturedBlob: null,
@@ -1636,71 +1636,85 @@ create table if not exists public.plotting_absensi (
     /* ==========================================================================
        7. KAMERA LIVE GEOTAG, WATERMARK CANVAS & KOMPRESI ~50KB + UPLOAD SUPABASE
        ========================================================================== */
-    function refreshGpsLocation() {
+    async function refreshGpsLocation() {
       const badge = document.getElementById('gpsStatusBadge');
       const readout = document.getElementById('inputGpsReadout');
-
+      state.gpsCoords.isLive = false;
       if (!navigator.geolocation) {
-        badge.textContent = "GPS: Fallback Simulasi Gresik";
-        readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
+        badge.textContent = 'GPS: Tidak tersedia';
+        badge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded bg-rose-50 text-rose-800 border border-rose-200';
+        readout.value = 'Lokasi perangkat tidak tersedia';
         updateCameraOverlayText();
-        return;
+        return false;
       }
 
-      badge.textContent = "GPS: Mencari titik koordinat...";
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          state.gpsCoords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            acc: Math.round(pos.coords.accuracy || 10),
-            isLive: true
-          };
-          badge.textContent = "GPS: Lokasi Terkunci (Live)";
-          badge.className = "text-[11px] font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200";
-          readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
-          updateCameraOverlayText();
-        },
-        () => {
-          badge.textContent = "GPS: Koordinat Default Gresik";
-          badge.className = "text-[11px] font-semibold px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200";
-          readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
-          updateCameraOverlayText();
-        },
-        { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
-      );
+      badge.textContent = 'GPS: Mencari titik koordinat...';
+      badge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded bg-amber-50 text-amber-800 border border-amber-200';
+      return new Promise(resolve => {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            state.gpsCoords = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              acc: Math.round(pos.coords.accuracy || 0),
+              isLive: true
+            };
+            badge.textContent = 'GPS: Lokasi Terkunci (Live)';
+            badge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200';
+            readout.value = `${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m)`;
+            updateCameraOverlayText();
+            resolve(true);
+          },
+          () => {
+            state.gpsCoords.isLive = false;
+            badge.textContent = 'GPS: Izin/lokasi tidak tersedia';
+            badge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded bg-rose-50 text-rose-800 border border-rose-200';
+            readout.value = 'Absensi tidak dapat dikirim tanpa GPS live';
+            updateCameraOverlayText();
+            resolve(false);
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
     }
 
     async function startLiveCamera() {
-      refreshGpsLocation();
       const video = document.getElementById('cameraVideoStream');
       const placeholder = document.getElementById('cameraPlaceholder');
-
       if (state.cameraStream) {
         state.cameraStream.getTracks().forEach(t => t.stop());
         state.cameraStream = null;
       }
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: false
-          });
-          state.cameraStream = stream;
-          video.srcObject = stream;
-          video.classList.remove('hidden');
-          placeholder.classList.add('hidden');
-          updateNoticeBar("Kamera live dan pembacaan koordinat GPS aktif. Silakan klik 'Jepret & Absen'.", false);
-          return;
-        } catch (err) {
-          // Lanjut ke mode fallback simulasi visual jika izin kamera ditolak di sandbox
-        }
+      const gpsReady = await refreshGpsLocation();
+      if (!gpsReady) {
+        video.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        updateNoticeBar('GPS perangkat belum tersedia. Aktifkan izin lokasi sebelum melakukan absensi.', true);
+        return;
       }
-
-      video.classList.add('hidden');
-      placeholder.classList.remove('hidden');
-      updateNoticeBar("Izin kamera perangkat tidak tersedia di lingkungan ini; tombol 'Jepret & Absen' akan merender frame simulasi kamera ber-watermark secara langsung.", false);
+      if (!navigator.mediaDevices?.getUserMedia) {
+        video.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        updateNoticeBar('Browser ini tidak mendukung kamera. Absensi membutuhkan foto kamera asli.', true);
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        state.cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        video.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        updateNoticeBar('Kamera live dan GPS aktif. Pastikan lokasi benar sebelum mengirim absensi.', false);
+      } catch (err) {
+        state.cameraStream = null;
+        video.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        updateNoticeBar('Kamera tidak dapat diakses. Periksa izin kamera browser dan coba lagi.', true);
+      }
     }
 
     function stopLiveCamera() {
@@ -1735,232 +1749,154 @@ create table if not exists public.plotting_absensi (
     }
 
     async function captureAndSubmitGeotag() {
-      const user = state.currentUser || state.panitia[0];
+      if (!supabaseClient || !state.authSession?.user?.id || !state.currentUser) {
+        updateNoticeBar('Login aktif diperlukan untuk mengirim absensi.', true);
+        return;
+      }
+      if (!state.cameraStream || !state.gpsCoords.isLive) {
+        updateNoticeBar('Absensi ditolak: kamera dan GPS live wajib aktif.', true);
+        return;
+      }
       const selectEl = document.getElementById('selectAbsenAssignment');
-      if (!selectEl || !selectEl.value) {
-        updateNoticeBar("Pilih jadwal SMA tujuan terlebih dahulu sebelum melakukan absensi.", false);
+      if (!selectEl?.value) {
+        updateNoticeBar('Pilih jadwal visit terlebih dahulu.', true);
         return;
       }
 
       const [schoolId, slotIdxStr] = selectEl.value.split('|');
-      const slotIdx = parseInt(slotIdxStr, 10);
-      const sObj = state.sekolah.find(s => s.ID_Sekolah === schoolId);
-      const slotObj = (state.assignments[schoolId] || [])[slotIdx];
-      if (!sObj || !slotObj) return;
-
-      const canvas = document.getElementById('geotagCanvas');
-      const ctx = canvas.getContext('2d');
-      const video = document.getElementById('cameraVideoStream');
-
-      const width = 800;
-      const height = 600;
-      canvas.width = width;
-      canvas.height = height;
-
-      // 1. Gambar frame video dari kamera atau visual frame simulasi jika kamera tidak aktif
-      if (state.cameraStream && video.readyState >= 2) {
-        ctx.drawImage(video, 0, 0, width, height);
-      } else {
-        ctx.fillStyle = "#1E293B";
-        ctx.fillRect(0, 0, width, height);
-        ctx.strokeStyle = "#334155";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(30, 30, width - 60, height - 180);
-
-        ctx.fillStyle = "#64748B";
-        ctx.beginPath();
-        ctx.arc(width / 2, 185, 55, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(width / 2, 345, 95, Math.PI, 0, false);
-        ctx.fill();
-
-        ctx.fillStyle = "#CBD5E1";
-        ctx.font = "bold 18px Inter, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("FRAME KAMERA ABSENSI GEOTAG PANITIA", width / 2, 395);
-        ctx.textAlign = "left";
+      const slotIdx = Number.parseInt(slotIdxStr, 10);
+      const school = state.sekolah.find(item => item.ID_Sekolah === schoolId);
+      const slot = (state.assignments[schoolId] || [])[slotIdx];
+      if (!school || !slot || slot.panitiaId !== state.currentUser.ID_Panitia) {
+        updateNoticeBar('Penugasan tidak sesuai dengan akun yang sedang login.', true);
+        return;
+      }
+      if (slot.status_hadir === 'Hadir') {
+        updateNoticeBar('Absensi untuk jadwal ini sudah tercatat.', true);
+        return;
       }
 
-      // 2. Gambar kotak Watermark otomatis di bagian bawah foto
-      const barHeight = 135;
-      ctx.fillStyle = "rgba(15, 23, 42, 0.86)";
-      ctx.fillRect(0, height - barHeight, width, barHeight);
+      const video = document.getElementById('cameraVideoStream');
+      if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+        updateNoticeBar('Kamera belum menghasilkan frame. Tunggu beberapa detik, lalu coba lagi.', true);
+        return;
+      }
+      if (!Number.isFinite(state.gpsCoords.lat) || !Number.isFinite(state.gpsCoords.lng) ||
+          !Number.isFinite(state.gpsCoords.acc) || state.gpsCoords.acc <= 0) {
+        updateNoticeBar('Koordinat GPS live tidak valid. Perbarui lokasi perangkat.', true);
+        return;
+      }
 
-      ctx.fillStyle = "#EAB308";
-      ctx.fillRect(0, height - barHeight, width, 4);
+      const button = document.getElementById('btnCaptureGeotag');
+      button.disabled = true;
+      const originalLabel = button.textContent;
+      button.textContent = 'Mengirim absensi...';
+      let uploadedPath = null;
+      try {
+        const canvas = document.getElementById('geotagCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = 1000;
+        const height = 750;
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(video, 0, 0, width, height);
 
-      const timestampStr = new Date().toLocaleString('id-ID', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      });
+        const timestamp = new Date();
+        const timestampStr = timestamp.toLocaleString('id-ID', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          timeZone: 'Asia/Jakarta'
+        });
+        const barHeight = 145;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.fillRect(0, height - barHeight, width, barHeight);
+        ctx.fillStyle = '#EAB308';
+        ctx.fillRect(0, height - barHeight, width, 4);
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillStyle = '#FACC15';
+        ctx.fillText('KPK X INI LHO ITS 2027 — BUKTI ABSENSI GEOTAG', 22, height - 110);
+        ctx.font = 'bold 17px monospace';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(`Panitia: ${state.currentUser.Nama} (NRP ${state.currentUser.NRP})`, 22, height - 78);
+        ctx.font = '15px monospace';
+        ctx.fillStyle = '#E2E8F0';
+        ctx.fillText(`Sekolah: ${school.Nama_SMA} | Tim ${slot.tim} | ${school.Tanggal_Visit}`, 22, height - 48);
+        ctx.fillStyle = '#CBD5E1';
+        ctx.fillText(`GPS: ${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (akurasi ±${state.gpsCoords.acc}m)`, 22, height - 20);
 
-      ctx.font = "bold 16px monospace";
-      ctx.fillStyle = "#FACC15";
-      ctx.fillText("KPK X INI LHO ITS 2027 WILAYAH GRESIK — BUKTI ABSENSI GEOTAG", 20, height - 102);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.72));
+        if (!blob) throw new Error('Gagal memproses foto dari kamera.');
+        if (blob.size > 1024 * 1024) throw new Error('Ukuran foto melebihi batas 1 MB.');
 
-      ctx.font = "bold 16px monospace";
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillText(`Panitia : ${user.Nama} (NRP: ${user.NRP})`, 20, height - 74);
-
-      ctx.font = "15px monospace";
-      ctx.fillStyle = "#E2E8F0";
-      ctx.fillText(`Sekolah : ${sObj.Nama_SMA} (Tim ${slotObj.tim}) | Jadwal: ${sObj.Tanggal_Visit}`, 20, height - 46);
-
-      ctx.font = "14px monospace";
-      ctx.fillStyle = "#94A3B8";
-      ctx.fillText(`Geotag  : ${state.gpsCoords.lat.toFixed(6)}, ${state.gpsCoords.lng.toFixed(6)} (±${state.gpsCoords.acc}m) | Waktu: ${timestampStr}`, 20, height - 18);
-
-      // 3. Konversi Canvas ke Blob JPEG terkompresi (quality 0.6 -> ~40-55 KB)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-      state.lastCapturedDataUrl = dataUrl;
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        state.lastCapturedBlob = blob;
-        const sizeKb = (blob.size / 1024).toFixed(1);
-
-        // Tampilkan hasil di preview
-        const imgPreview = document.getElementById('capturedPhotoPreview');
-        const emptyState = document.getElementById('capturedEmptyState');
-        imgPreview.src = dataUrl;
-        imgPreview.classList.remove('hidden');
-        emptyState.classList.add('hidden');
-
-        document.getElementById('captureSizeBadge').textContent = `${sizeKb} KB (JPEG q=0.6)`;
-        document.getElementById('metaBlobSize').textContent = `${sizeKb} KB (${blob.size} bytes)`;
+        const previewUrl = canvas.toDataURL('image/jpeg', 0.72);
+        document.getElementById('capturedPhotoPreview').src = previewUrl;
+        document.getElementById('capturedPhotoPreview').classList.remove('hidden');
+        document.getElementById('capturedEmptyState').classList.add('hidden');
+        document.getElementById('captureSizeBadge').textContent = `${(blob.size / 1024).toFixed(1)} KB (JPEG)`;
+        document.getElementById('metaBlobSize').textContent = `${(blob.size / 1024).toFixed(1)} KB (${blob.size} bytes)`;
         document.getElementById('btnDownloadCapturedJpg').disabled = false;
+        state.lastCapturedBlob = blob;
+        state.lastCapturedDataUrl = previewUrl;
 
-        const fileName = `${sObj.ID_Sekolah}_${user.NRP}_${Date.now()}.jpg`;
-        const storagePath = `${STORAGE_BUCKET_NAME}/${fileName}`;
-        let finalPhotoUrl = dataUrl;
+        const objectName = `${slot.id_plotting}-${Date.now()}.jpg`;
+        uploadedPath = `${state.authSession.user.id}/${objectName}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from(STORAGE_BUCKET_NAME)
+          .upload(uploadedPath, blob, { contentType: 'image/jpeg', upsert: false });
+        if (uploadError) throw uploadError;
 
-        // 4. Jika Supabase terkonfigurasi, unggah langsung ke bucket 'foto-absensi' dan update tabel 'plotting_absensi'
-        if (supabaseClient) {
-          try {
-            const { error: upErr } = await supabaseClient
-              .storage
-              .from(STORAGE_BUCKET_NAME)
-              .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+        const { data: rpcData, error: rpcError } = await supabaseClient.rpc('submit_absensi_geotag', {
+          p_id_plotting: slot.id_plotting,
+          p_foto_path: uploadedPath,
+          p_latitude: state.gpsCoords.lat,
+          p_longitude: state.gpsCoords.lng,
+          p_akurasi_meter: state.gpsCoords.acc
+        });
+        if (rpcError) throw rpcError;
 
-            if (!upErr) {
-              const { data: pubData } = supabaseClient
-                .storage
-                .from(STORAGE_BUCKET_NAME)
-                .getPublicUrl(fileName);
-              if (pubData && pubData.publicUrl) {
-                finalPhotoUrl = pubData.publicUrl;
-              }
-            }
+        const { data: signedPhoto, error: signedError } = await supabaseClient.storage
+          .from(STORAGE_BUCKET_NAME).createSignedUrl(uploadedPath, 3600);
+        if (signedError) throw signedError;
 
-            await supabaseClient
-              .from('plotting_absensi')
-              .upsert({
-                id_plotting: slotObj.id_plotting,
-                id_sekolah: sObj.ID_Sekolah,
-                nama_sma: sObj.Nama_SMA,
-                zona_sekolah: sObj.Zona_Sekolah,
-                kategori_lokasi: sObj.Kategori_Lokasi,
-                tanggal_visit: sObj.Tanggal_Visit,
-                tim: slotObj.tim,
-                kursi: slotObj.kursi,
-                id_panitia: user.ID_Panitia,
-                nrp: user.NRP,
-                nama_panitia: user.Nama,
-                is_alumni: slotObj.isAlumni,
-                status_hadir: 'Hadir',
-                foto_url: finalPhotoUrl,
-                latitude: state.gpsCoords.lat,
-                longitude: state.gpsCoords.lng,
-                akurasi_meter: state.gpsCoords.acc,
-                waktu_absen: new Date().toISOString()
-              });
-          } catch (dbErr) {
-            // Tetap simpan di in-memory state apabila terjadi kendala jaringan
-          }
-        }
+        slot.status_hadir = 'Hadir';
+        slot.foto_path = uploadedPath;
+        slot.foto_url = signedPhoto.signedUrl;
+        slot.latitude = state.gpsCoords.lat;
+        slot.longitude = state.gpsCoords.lng;
+        slot.akurasi_meter = state.gpsCoords.acc;
+        slot.waktu_absen = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+        slot.status_geotag = rpcData?.status_geotag || 'Perlu Verifikasi Admin';
 
-        // Update state in-memory
-        slotObj.status_hadir = 'Hadir';
-        slotObj.foto_url = finalPhotoUrl;
-        slotObj.latitude = state.gpsCoords.lat;
-        slotObj.longitude = state.gpsCoords.lng;
-        slotObj.akurasi_meter = state.gpsCoords.acc;
-        slotObj.waktu_absen = timestampStr;
-
-        document.getElementById('metaStatusHadir').textContent = `HADIR TERVERIFIKASI (${sObj.Nama_SMA})`;
-        document.getElementById('metaStatusHadir').className = "text-emerald-700 font-bold";
-        document.getElementById('metaStoragePath').textContent = storagePath;
-
+        document.getElementById('metaStatusHadir').textContent = `ABSENSI TERCATAT — ${school.Nama_SMA}`;
+        document.getElementById('metaStatusHadir').className = 'text-emerald-700 font-bold';
+        document.getElementById('metaStoragePath').textContent = uploadedPath;
         renderAll();
         populateCameraAssignmentDropdown();
         updateNoticeBar(
-          `Absensi Geotag berhasil disimpan untuk ${user.Nama} di ${sObj.Nama_SMA} (Ukuran foto: ${sizeKb} KB, Status: Hadir).`,
+          `Absensi berhasil dikirim. Status geotag: ${slot.status_geotag}. Waktu server tercatat di database.`,
           false
         );
-      }, 'image/jpeg', 0.6);
+      } catch (error) {
+        updateNoticeBar('Absensi gagal disimpan: ' + (error.message || 'Terjadi kesalahan.'), true);
+      } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+      }
     }
 
     /* ==========================================================================
        8. SINKRONISASI SUPABASE (PUBLISH PLOTTING & SIMPAN FORM KETERSEDIAAN)
        ========================================================================== */
     async function publishPlottingToSupabase() {
-      if (!supabaseClient) {
-        updateNoticeBar("Mode Demo Aktif: Hasil plotting telah disimpan di memori aplikasi. Untuk mengunggah ke cloud Supabase, isi SUPABASE_URL dan SUPABASE_ANON_KEY di bagian atas script.", false);
+      if (supabaseClient) {
+        updateNoticeBar(
+          'Publish plotting versi lama dinonaktifkan agar data demo tidak menimpa database. Gunakan alur Draft/Published yang sudah tervalidasi setelah migrasi database staging.',
+          true
+        );
         return;
       }
-
-      try {
-        updateNoticeBar("Mengunggah data panitia dan 675 slot plotting ke Supabase...", false);
-        const panitiaPayload = state.panitia.map(p => ({
-          id_panitia: p.ID_Panitia,
-          nrp: p.NRP,
-          nama: p.Nama,
-          role: p.Role,
-          asal_sma: p.Asal_SMA,
-          zona_domisili: p.Zona_Domisili,
-          bersedia_jauh: p.Bersedia_Jauh,
-          tanggal_halangan: p.Tanggal_Halangan,
-          info_tambahan: p.Info_Tambahan
-        }));
-
-        await supabaseClient.from('panitia').upsert(panitiaPayload);
-
-        const panitiaMap = {};
-        state.panitia.forEach(p => { panitiaMap[p.ID_Panitia] = p; });
-
-        const plottingPayload = [];
-        state.sekolah.forEach(s => {
-          const slots = state.assignments[s.ID_Sekolah] || [];
-          slots.forEach(sl => {
-            const p = panitiaMap[sl.panitiaId] || {};
-            plottingPayload.push({
-              id_plotting: sl.id_plotting,
-              id_sekolah: s.ID_Sekolah,
-              nama_sma: s.Nama_SMA,
-              zona_sekolah: s.Zona_Sekolah,
-              kategori_lokasi: s.Kategori_Lokasi,
-              tanggal_visit: s.Tanggal_Visit,
-              tim: sl.tim,
-              kursi: sl.kursi,
-              id_panitia: sl.panitiaId,
-              nrp: p.NRP || '',
-              nama_panitia: p.Nama || '',
-              is_alumni: sl.isAlumni,
-              status_hadir: sl.status_hadir || 'Belum Hadir',
-              foto_url: sl.foto_url || null,
-              latitude: sl.latitude,
-              longitude: sl.longitude,
-              akurasi_meter: sl.akurasi_meter
-            });
-          });
-        });
-
-        await supabaseClient.from('plotting_absensi').upsert(plottingPayload);
-        updateNoticeBar("Berhasil mem-publish seluruh data panitia dan jadwal plotting ke database Supabase!", false);
-      } catch (err) {
-        updateNoticeBar("Gagal mem-publish ke Supabase: " + err.message, false);
-      }
+      updateNoticeBar('Mode demo: perubahan hanya tersimpan selama sesi browser ini.', false);
     }
 
     /* ==========================================================================
@@ -2314,13 +2250,28 @@ create table if not exists public.plotting_absensi (
         const mySlotIndex = slots.findIndex(sl => sl.panitiaId === user.ID_Panitia);
         if (mySlotIndex !== -1) {
           const mySlot = slots[mySlotIndex];
-          const rekanSatuTim = slots
-            .filter(sl => sl.tim === mySlot.tim)
-            .map(sl => state.teamRoster[sl.id_plotting]?.nama || panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId);
-          const semuaRekanSma = slots.map(sl => ({
-            tim: sl.tim,
-            nama: state.teamRoster[sl.id_plotting]?.nama || panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId,
-            info: state.teamRoster[sl.id_plotting]?.fakultas || panitiaMap[sl.panitiaId]?.Info_Tambahan || '-'
+          const isOnlinePanitia = !!supabaseClient && normalizeText(user.Role) !== 'admin';
+          const teamMembers = isOnlinePanitia
+            ? Object.values(state.teamRoster).filter(member => member.id_jadwal === mySlot.id_jadwal)
+            : slots.filter(sl => sl.tim === mySlot.tim).map(sl => ({
+                tim: sl.tim,
+                nama: panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId,
+                fakultas: panitiaMap[sl.panitiaId]?.Fakultas || '-'
+              }));
+          const schoolMembers = isOnlinePanitia
+            ? Object.values(state.teamRoster).filter(member => member.id_jadwal === mySlot.id_jadwal)
+            : slots.map(sl => ({
+                tim: sl.tim,
+                nama: panitiaMap[sl.panitiaId]?.Nama || sl.panitiaId,
+                fakultas: panitiaMap[sl.panitiaId]?.Fakultas || '-'
+              }));
+          const rekanSatuTim = teamMembers
+            .filter(member => member.tim === mySlot.tim)
+            .map(member => member.nama);
+          const semuaRekanSma = schoolMembers.map(member => ({
+            tim: member.tim,
+            nama: member.nama,
+            info: member.fakultas || '-'
           }));
           myAssignments.push({
             sekolah: s,
@@ -2982,10 +2933,10 @@ create table if not exists public.plotting_absensi (
           const rosterResults = await Promise.all(scheduleIds.map(id =>
             supabaseClient.rpc('get_rekan_setim', { p_id_jadwal: id })
           ));
-          rosterResults.forEach(result => {
+          rosterResults.forEach((result, index) => {
             if (result.error) throw result.error;
             (result.data || []).forEach(member => {
-              state.teamRoster[member.id_plotting] = member;
+              state.teamRoster[member.id_plotting] = { ...member, id_jadwal: scheduleIds[index] };
             });
           });
         }
