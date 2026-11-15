@@ -697,7 +697,7 @@
         <button type="button" id="btnCloseLoginModal" class="text-slate-400 hover:text-slate-600 text-xs font-bold">TUTUP</button>
       </div>
       <div class="space-y-3 text-sm">
-        <p class="text-slate-600">Gunakan NRP dan password yang diberikan oleh Panitia Visit. Hak akses Admin atau Panitia ditentukan oleh database.</p>
+        <p id="loginInstructionText" class="text-slate-600">Gunakan NRP dan password yang diberikan oleh Panitia Visit. Hak akses Admin atau Panitia ditentukan oleh database.</p>
         <div>
           <label for="modalInputNrp" class="block font-semibold text-slate-700 mb-1">NRP</label>
           <input type="text" id="modalInputNrp" inputmode="numeric" autocomplete="username" placeholder="Masukkan NRP" class="w-full h-10 px-3 border border-[#CBD5E1] rounded-lg font-mono-num text-sm">
@@ -2366,6 +2366,10 @@ create table if not exists public.plotting_absensi (
       document.getElementById('formNrpBadge').textContent = `NRP: ${user.NRP}`;
       document.getElementById('formInputNrp').value = user.NRP;
       document.getElementById('formInputNama').value = user.Nama;
+      document.getElementById('formInputNrp').readOnly = !!supabaseClient;
+      document.getElementById('formInputNama').readOnly = !!supabaseClient;
+      document.getElementById('formInputNrp').classList.toggle('bg-slate-100', !!supabaseClient);
+      document.getElementById('formInputNama').classList.toggle('bg-slate-100', !!supabaseClient);
       selectSma.value = user.Asal_SMA;
       document.getElementById('formSelectZona').value = user.Zona_Domisili;
       document.getElementById('formSelectBersediaJauh').value = user.Bersedia_Jauh;
@@ -2583,6 +2587,17 @@ create table if not exists public.plotting_absensi (
         badgeDb.className = "text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/30";
       }
 
+      const loginInstruction = document.getElementById('loginInstructionText');
+      const passwordField = document.getElementById('modalInputPassword');
+      if (loginInstruction) {
+        loginInstruction.textContent = supabaseClient
+          ? 'Gunakan NRP dan password yang diberikan oleh Panitia Visit. Hak akses ditentukan oleh database.'
+          : 'Mode demo aktif. Masukkan NRP atau pilih akun simulasi; password tidak diperlukan dan tidak ada data yang dikirim ke database.';
+      }
+      if (!supabaseClient) {
+        passwordField?.closest('div')?.classList.add('hidden');
+      }
+
       // Data simulasi hanya dipakai ketika konfigurasi Supabase kosong.
       const sim = buildGresikSimulationData();
       state.sekolah = sim.sekolahData;
@@ -2688,6 +2703,10 @@ create table if not exists public.plotting_absensi (
 
       // Tombol Jalankan Algoritma Plotting & Publish Supabase
       document.getElementById('btnGeneratePlotting').addEventListener('click', () => {
+        if (supabaseClient) {
+          updateNoticeBar('Generator plotting versi demo belum diaktifkan untuk data online. Gunakan alur Draft dan Published setelah migrasi database staging selesai.', true);
+          return;
+        }
         runPlottingAlgorithm(false);
         updateNoticeBar("Algoritma Plotting selesai dijalankan: seluruh 135 panitia mendapat tepat 5x visit tanpa bentrok tanggal.", false);
       });
