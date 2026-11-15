@@ -2739,7 +2739,7 @@ create table if not exists public.plotting_absensi (
         a.click();
       });
 
-      // Submit Form Ketersediaan Panitia
+      // Simpan preferensi ketersediaan: online hanya boleh memperbarui profil sendiri.
       document.getElementById('formKetersediaanPanitia').addEventListener('submit', async (e) => {
         e.preventDefault();
         const nrp = document.getElementById('formInputNrp').value.trim();
@@ -2750,15 +2750,51 @@ create table if not exists public.plotting_absensi (
         const halangan = document.getElementById('formInputTanggalHalangan').value.trim() || '-';
         const info = document.getElementById('formInputInfoTambahan').value.trim() || '-';
 
+        if (supabaseClient) {
+          const user = state.currentUser;
+          const sessionUserId = state.authSession?.user?.id;
+          if (!user || !sessionUserId || normalizeText(nrp) !== normalizeText(user.NRP)) {
+            updateNoticeBar('Anda hanya dapat memperbarui data ketersediaan milik akun sendiri.', true);
+            return;
+          }
+
+          const submitButton = document.querySelector('#formKetersediaanPanitia button[type="submit"]');
+          if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Menyimpan...'; }
+          try {
+            const { data, error } = await supabaseClient
+              .from('panitia')
+              .update({
+                asal_sma: asalSma,
+                zona_domisili: zona,
+                bersedia_visit: bersedia,
+                tanggal_halangan: halangan,
+                info_tambahan: info
+              })
+              .eq('auth_user_id', sessionUserId)
+              .select('id_panitia')
+              .single();
+            if (error) throw error;
+            if (!data) throw new Error('Profil panitia tidak ditemukan.');
+
+            user.Asal_SMA = asalSma;
+            user.Zona_Domisili = zona;
+            user.Bersedia_Jauh = bersedia;
+            user.Tanggal_Halangan = halangan;
+            user.Info_Tambahan = info;
+            renderAll();
+            populateFormKetersediaan();
+            updateNoticeBar('Preferensi ketersediaan akun Anda berhasil diperbarui.', false);
+          } catch (error) {
+            updateNoticeBar('Gagal menyimpan preferensi: ' + (error.message || 'Terjadi kesalahan.'), true);
+          } finally {
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Simpan Ketersediaan'; }
+          }
+          return;
+        }
+
+        // Mode demo: perubahan hanya disimpan di memori browser.
         let targetPanitia = state.panitia.find(p => normalizeText(p.NRP) === normalizeText(nrp));
-        if (targetPanitia) {
-          targetPanitia.Nama = nama;
-          targetPanitia.Asal_SMA = asalSma;
-          targetPanitia.Zona_Domisili = zona;
-          targetPanitia.Bersedia_Jauh = bersedia;
-          targetPanitia.Tanggal_Halangan = halangan;
-          targetPanitia.Info_Tambahan = info;
-        } else {
+        if (!targetPanitia) {
           targetPanitia = {
             ID_Panitia: `PNT-${String(state.panitia.length + 1).padStart(3, '0')}`,
             NRP: nrp,
@@ -2771,30 +2807,17 @@ create table if not exists public.plotting_absensi (
             Info_Tambahan: info
           };
           state.panitia.push(targetPanitia);
+        } else {
+          targetPanitia.Nama = nama;
+          targetPanitia.Asal_SMA = asalSma;
+          targetPanitia.Zona_Domisili = zona;
+          targetPanitia.Bersedia_Jauh = bersedia;
+          targetPanitia.Tanggal_Halangan = halangan;
+          targetPanitia.Info_Tambahan = info;
         }
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('panitia').upsert({
-              id_panitia: targetPanitia.ID_Panitia,
-              nrp: targetPanitia.NRP,
-              nama: targetPanitia.Nama,
-              role: targetPanitia.Role,
-              asal_sma: targetPanitia.Asal_SMA,
-              zona_domisili: targetPanitia.Zona_Domisili,
-              bersedia_jauh: targetPanitia.Bersedia_Jauh,
-              tanggal_halangan: targetPanitia.Tanggal_Halangan,
-              info_tambahan: targetPanitia.Info_Tambahan
-            });
-          } catch (err) {
-            // Tetap tersimpan di memori lokal
-          }
-        }
-
-        state.currentUser = targetPanitia;
-        document.getElementById('sidebarUserName').textContent = targetPanitia.Nama;
+        applySignedInPanitia(targetPanitia);
         renderAll();
-        updateNoticeBar(`Data ketersediaan ${targetPanitia.Nama} (NRP ${targetPanitia.NRP}) berhasil diperbarui.`, false);
+        updateNoticeBar(`Mode demo: data ketersediaan ${targetPanitia.Nama} diperbarui di sesi browser.`, false);
       });
 
       // Filter Pencarian & Dropdown Monitoring
