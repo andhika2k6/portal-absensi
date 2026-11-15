@@ -1753,8 +1753,13 @@ create table if not exists public.plotting_absensi (
         updateNoticeBar('Login aktif diperlukan untuk mengirim absensi.', true);
         return;
       }
-      if (!state.cameraStream || !state.gpsCoords.isLive) {
-        updateNoticeBar('Absensi ditolak: kamera dan GPS live wajib aktif.', true);
+      if (!state.cameraStream) {
+        updateNoticeBar('Absensi ditolak: kamera live wajib aktif.', true);
+        return;
+      }
+      const gpsReady = await refreshGpsLocation();
+      if (!gpsReady || !state.gpsCoords.isLive) {
+        updateNoticeBar('Absensi ditolak: GPS live belum tersedia. Periksa izin lokasi perangkat.', true);
         return;
       }
       const selectEl = document.getElementById('selectAbsenAssignment');
